@@ -65,21 +65,13 @@
 
   <script>
     const container = document.querySelector('.canvas-container');
-    const line = document.getElementById('rotating-line');
-
+    
     function randomIntFromInterval(min, max) {
       return Math.floor(Math.random() * (max - min + 1) + min);
     }
 
     const NUM_POINTS = randomIntFromInterval(8, 100); // Configurable number of points
     const RADIUS = 400; // Radius of the circle
-
-    line.style.width = '2px';
-    line.style.height = `${RADIUS}px`;
-    line.style.backgroundColor = 'blue';
-    line.style.transformOrigin = 'bottom center';
-    line.style.left = '50%';
-    line.style.bottom = '50%';
 
     // Function to generate random points within a circle
     const generateRandomPoints = (numPoints, radius) => {
