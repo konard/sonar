@@ -57,7 +57,7 @@
       return Math.floor(Math.random() * (max - min + 1) + min);
     }
 
-    const NUM_POINTS = randomIntFromInterval(3, 500); // Configurable number of points
+    const NUM_POINTS = randomIntFromInterval(3, 100); // Configurable number of points
     const RADIUS = 400; // Radius of the circle
 
     line.style.width = '2px';
@@ -124,7 +124,7 @@
       newdiv.style.transformOrigin = "left 50%";
       newdiv.style.transform = "rotate(" + deg + "deg)";
       newdiv.style.position = "absolute";
-      
+
       container.appendChild(newdiv);
     }
 
