@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rotating Line and Connecting Points</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: #f0f0f0;
+    }
+
+    .canvas-container {
+      position: relative;
+      width: 800px;
+      height: 800px;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 50%;
+    }
+
+    .line,
+    .point {
+      position: absolute;
+    }
+
+    .point {
+      width: 10px;
+      height: 10px;
+      background: red;
+      border-radius: 50%;
+    }
+
+    .point :first {
+      width: 10px;
+      height: 10px;
+      background: green;
+      border-radius: 50%;
+    }
+
+    .point :last {
+      width: 10px;
+      height: 10px;
+      background: blue;
+      border-radius: 50%;
+    }
+
+    .segment {
+      position: absolute;
+      background: green;
+      height: 2px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="canvas-container">
+    <div class="line" id="rotating-line"></div>
+  </div>
+
+  <script>
+    const container = document.querySelector('.canvas-container');
+    const line = document.getElementById('rotating-line');
+
+    function randomIntFromInterval(min, max) {
+      return Math.floor(Math.random() * (max - min + 1) + min);
+    }
+
+    const NUM_POINTS = randomIntFromInterval(8, 100); // Configurable number of points
+    const RADIUS = 400; // Radius of the circle
+
+    line.style.width = '2px';
+    line.style.height = `${RADIUS}px`;
+    line.style.backgroundColor = 'blue';
+    line.style.transformOrigin = 'bottom center';
+    line.style.left = '50%';
+    line.style.bottom = '50%';
+
+    // Function to generate random points within a circle
+    const generateRandomPoints = (numPoints, radius) => {
+      const points = [];
+      for (let i = 0; i < numPoints; i++) {
+        const angle = Math.random() * 2 * Math.PI;
+        const r = Math.sqrt(Math.random()) * radius;
+        const x = r * Math.cos(angle) + container.clientWidth / 2;
+        const y = r * Math.sin(angle) + container.clientHeight / 2;
+        points.push({ x, y, angle });
+      }
+      return points;
+    };
+
+    // Create points
+    const points = generateRandomPoints(NUM_POINTS, RADIUS / 2);
+
+    const sortedPoints = [...points];
+
+    sortedPoints.sort((a, b) => {
+      return a.angle - b.angle;
+    });
+
+    console.log(sortedPoints);
+
+    points.forEach(({ x, y }) => {
+      const pointDiv = document.createElement('div');
+      pointDiv.classList.add('point');
+      pointDiv.style.left = `${x - 5}px`; // Center justify the point
+      pointDiv.style.top = `${y - 5}px`; // Center justify the point
+      container.appendChild(pointDiv);
+    });
+
+    const distance = (start, end) => Math.hypot(end.y - start.y, end.x - start.x);
+
+    const zigzag = (i) => {
+      const p1 = sortedPoints[(i - 1) % sortedPoints.length];
+      const p2 = sortedPoints[(i) % sortedPoints.length];
+      const p3 = sortedPoints[(i + 1) % sortedPoints.length];
+      const p4 = sortedPoints[(i + 2) % sortedPoints.length];
+      const segment1 = distance(p1, p2);
+      const segment3 = distance(p3, p4);
+      const zigZagSegment1 = distance(p1, p3);
+      const zigZagSegment3 = distance(p2, p4);
+      return (zigZagSegment1 + zigZagSegment3) < (segment1 + segment3);
+    };
+
+    let i = 1;
+    let connectedPoints = [];
+    function step() {
+      console.log(i);
+      if (sortedPoints.length - i > 2 && zigzag(i)) {
+        console.log('i', i, 'sortedPoints.length', sortedPoints.length);
+        drawLineSegment(sortedPoints[(i - 1) % sortedPoints.length], sortedPoints[(i + 1) % sortedPoints.length], 2, 0.5, "blue");
+        drawLineSegment(sortedPoints[(i + 1) % sortedPoints.length], sortedPoints[(i) % sortedPoints.length], 2, 0.5, "blue");
+        drawLineSegment(sortedPoints[(i) % sortedPoints.length], sortedPoints[(i + 2) % sortedPoints.length], 2, 0.5, "blue");
+        i += 3;
+        if (i < (sortedPoints.length + 1)) {
+          requestAnimationFrame(step);
+        }
+      } else {
+        // console.log('i', i)
+        // console.log('sortedPoints[i - 1]', sortedPoints[i - 1]);
+        // console.log('i % sortedPoints.length', i % sortedPoints.length)
+        // console.log('sortedPoints[i % sortedPoints.length]', sortedPoints[i % sortedPoints.length]);
+        drawLineSegment(sortedPoints[i - 1], sortedPoints[i % sortedPoints.length], 2, 0.5);
+        i++;
+        if (i < (sortedPoints.length + 1)) {
+          requestAnimationFrame(step);
+        }
+      }
+    }
+
+    function drawLineSegment(start, end, size, opacity, color) {
+      var length = Math.hypot(end.y - start.y, end.x - start.x),
+        deg = Math.atan2(end.y - start.y, end.x - start.x) * 180 / Math.PI;
+
+      var newdiv = document.createElement('div');
+      newdiv.style.width = length + "px";
+      newdiv.style.height = (size || 2) + "px";
+      newdiv.style.left = start.x + "px";
+      newdiv.style.top = start.y + "px";
+      newdiv.style.background = color || "green";
+      newdiv.style.opacity = opacity || 1;
+      newdiv.style.transformOrigin = "left 50%";
+      newdiv.style.transform = "rotate(" + deg + "deg)";
+      newdiv.style.position = "absolute";
+
+      container.appendChild(newdiv);
+    }
+
+
+    step();
+  </script>
+</body>
+
+</html>
