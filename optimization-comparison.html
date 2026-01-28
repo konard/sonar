@@ -158,14 +158,25 @@
     </div>
 
     <div class="method-card">
-      <div class="method-title">4. Hybrid Approach</div>
+      <div class="method-title">4. Hybrid: 2-Opt → Zigzag</div>
       <div class="method-description">
-        Combines zigzag optimization with 2-opt improvement.
-        Applies zigzag first, then refines with 2-opt.
+        Applies 2-opt optimization first, then refines with zigzag.
+        Combines global edge swapping with local path improvements.
       </div>
       <div class="canvas-container" id="canvas4"></div>
       <div class="progress"><div class="progress-bar" id="progress4"></div></div>
       <div class="stats" id="stats4">Initializing...</div>
+    </div>
+
+    <div class="method-card">
+      <div class="method-title">5. Hybrid: Zigzag → 2-Opt</div>
+      <div class="method-description">
+        Applies zigzag optimization first, then refines with 2-opt.
+        Local improvements followed by global edge swapping.
+      </div>
+      <div class="canvas-container" id="canvas5"></div>
+      <div class="progress"><div class="progress-bar" id="progress5"></div></div>
+      <div class="stats" id="stats5">Initializing...</div>
     </div>
   </div>
 
@@ -197,13 +208,15 @@
     const NUM_POINTS = 50; // Fixed for fair comparison
     const RADIUS = 250;
 
-    // Generate same points for all methods
-    const generateRandomPoints = (numPoints, radius, centerX, centerY) => {
-      // Simple LCG for reproducible results
-      let seed = 42;
+    // Generate same points for all methods with random seed for variety on each reload
+    const initialSeed = Math.floor(Math.random() * 1000000);
+
+    const generateRandomPoints = (numPoints, radius, centerX, centerY, seed = initialSeed) => {
+      // Simple LCG for reproducible results within same page load
+      let currentSeed = seed;
       const rng = () => {
-        seed = (seed * 1103515245 + 12345) % (2**31);
-        return seed / (2**31);
+        currentSeed = (currentSeed * 1103515245 + 12345) % (2**31);
+        return currentSeed / (2**31);
       };
       const points = [];
       for (let i = 0; i < numPoints; i++) {
@@ -473,48 +486,114 @@
       };
     }
 
-    async function runHybridApproach(container, points, graph, lowerBound, upperBound) {
-      const startTime = performance.now();
+    // Helper: 2-opt improvement function (shared by hybrid methods)
+    function twoOptImproveShared(tour, graph, maxIterations = 100) {
+      const n = tour.length;
+      let improved = true;
+      let iterations = 0;
 
-      // First apply zigzag-like heuristic, then 2-opt
-      const sortedPoints = [...points].sort((a, b) => a.angle - b.angle);
-      let tour = sortedPoints.map(p => p.id);
+      while (improved && iterations < maxIterations) {
+        improved = false;
+        iterations++;
 
-      // Simple 2-opt on sorted tour
-      function twoOptImprove(tour, graph, maxIterations = 50) {
-        const n = tour.length;
-        let improved = true;
-        let iterations = 0;
+        for (let i = 0; i < n - 1; i++) {
+          for (let j = i + 2; j < n; j++) {
+            if (j === n - 1 && i === 0) continue;
 
-        while (improved && iterations < maxIterations) {
-          improved = false;
-          iterations++;
+            const currentDistance = graph[tour[i]][tour[i + 1]] + graph[tour[j]][tour[(j + 1) % n]];
+            const newDistance = graph[tour[i]][tour[j]] + graph[tour[i + 1]][tour[(j + 1) % n]];
 
-          for (let i = 0; i < n - 1; i++) {
-            for (let j = i + 2; j < n; j++) {
-              if (j === n - 1 && i === 0) continue;
-
-              const currentDistance = graph[tour[i]][tour[i + 1]] + graph[tour[j]][tour[(j + 1) % n]];
-              const newDistance = graph[tour[i]][tour[j]] + graph[tour[i + 1]][tour[(j + 1) % n]];
-
-              if (newDistance < currentDistance) {
-                const newTour = [...tour];
-                for (let k = 0; k <= j - i - 1; k++) {
-                  newTour[i + 1 + k] = tour[j - k];
-                }
-                tour = newTour;
-                improved = true;
+            if (newDistance < currentDistance) {
+              const newTour = [...tour];
+              for (let k = 0; k <= j - i - 1; k++) {
+                newTour[i + 1 + k] = tour[j - k];
               }
+              tour = newTour;
+              improved = true;
             }
           }
+        }
+      }
+
+      return tour;
+    }
+
+    // Helper: Apply zigzag optimization on a tour
+    function applyZigzagOnTour(tourIndices, points, graph) {
+      // Convert tour indices to points in tour order
+      const tourPoints = tourIndices.map(idx => ({ ...points[idx], originalId: idx }));
+
+      const zigzag = (i, pts) => {
+        const p1 = pts[(i - 1 + pts.length) % pts.length];
+        const p2 = pts[i % pts.length];
+        const p3 = pts[(i + 1) % pts.length];
+        const p4 = pts[(i + 2) % pts.length];
+        const segment1 = distance(p1, p2);
+        const segment3 = distance(p3, p4);
+        const zigZagSegment1 = distance(p1, p3);
+        const zigZagSegment3 = distance(p2, p4);
+        return (zigZagSegment1 + zigZagSegment3) < (segment1 + segment3);
+      };
+
+      const newTour = [];
+      let i = 1;
+      while (i < tourPoints.length) {
+        if (tourPoints.length - i > 2 && zigzag(i, tourPoints)) {
+          newTour.push(tourPoints[i - 1].originalId);
+          newTour.push(tourPoints[(i + 1) % tourPoints.length].originalId);
+          newTour.push(tourPoints[i % tourPoints.length].originalId);
+          newTour.push(tourPoints[(i + 2) % tourPoints.length].originalId);
+          i += 3;
+        } else {
+          newTour.push(tourPoints[i - 1].originalId);
+          newTour.push(tourPoints[i % tourPoints.length].originalId);
+          i++;
+        }
+      }
+
+      // Remove duplicates while preserving order
+      return [...new Set(newTour)];
+    }
+
+    // Method 4: Hybrid 2-Opt → Zigzag
+    async function runHybrid2OptThenZigzag(container, points, graph, lowerBound, upperBound) {
+      const startTime = performance.now();
+
+      // Step 1: Nearest neighbor initial tour
+      function nearestNeighborTour(points, graph) {
+        const n = points.length;
+        const visited = new Array(n).fill(false);
+        const tour = [0];
+        visited[0] = true;
+        let current = 0;
+
+        for (let step = 1; step < n; step++) {
+          let nearest = -1;
+          let minDist = Infinity;
+
+          for (let j = 0; j < n; j++) {
+            if (!visited[j] && graph[current][j] < minDist) {
+              minDist = graph[current][j];
+              nearest = j;
+            }
+          }
+
+          tour.push(nearest);
+          visited[nearest] = true;
+          current = nearest;
         }
 
         return tour;
       }
 
-      tour = twoOptImprove(tour, graph);
-      const pathLength = calculateTourLength(tour, graph);
+      // Step 2: Apply 2-opt optimization first
+      let tour = nearestNeighborTour(points, graph);
+      tour = twoOptImproveShared(tour, graph);
 
+      // Step 3: Apply zigzag refinement
+      tour = applyZigzagOnTour(tour, points, graph);
+
+      const pathLength = calculateTourLength(tour, graph);
       visualizeTour(container, points, tour, "#6f42c1");
 
       const endTime = performance.now();
@@ -525,7 +604,63 @@
         efficiency,
         runtime: endTime - startTime,
         complexity: "O(n²)",
-        bestFor: "Balanced performance"
+        bestFor: "Global then local optimization"
+      };
+    }
+
+    // Method 5: Hybrid Zigzag → 2-Opt
+    async function runHybridZigzagThen2Opt(container, points, graph, lowerBound, upperBound) {
+      const startTime = performance.now();
+
+      // Step 1: Apply zigzag optimization on angular sorted points
+      const sortedPoints = [...points].sort((a, b) => a.angle - b.angle);
+
+      const zigzag = (i) => {
+        const p1 = sortedPoints[(i - 1) % sortedPoints.length];
+        const p2 = sortedPoints[i % sortedPoints.length];
+        const p3 = sortedPoints[(i + 1) % sortedPoints.length];
+        const p4 = sortedPoints[(i + 2) % sortedPoints.length];
+        const segment1 = distance(p1, p2);
+        const segment3 = distance(p3, p4);
+        const zigZagSegment1 = distance(p1, p3);
+        const zigZagSegment3 = distance(p2, p4);
+        return (zigZagSegment1 + zigZagSegment3) < (segment1 + segment3);
+      };
+
+      let tour = [];
+      let i = 1;
+      while (i < sortedPoints.length) {
+        if (sortedPoints.length - i > 2 && zigzag(i)) {
+          tour.push(sortedPoints[i - 1].id);
+          tour.push(sortedPoints[(i + 1) % sortedPoints.length].id);
+          tour.push(sortedPoints[i % sortedPoints.length].id);
+          tour.push(sortedPoints[(i + 2) % sortedPoints.length].id);
+          i += 3;
+        } else {
+          tour.push(sortedPoints[i - 1].id);
+          tour.push(sortedPoints[i % sortedPoints.length].id);
+          i++;
+        }
+      }
+
+      // Remove duplicates while preserving order
+      tour = [...new Set(tour)];
+
+      // Step 2: Apply 2-opt refinement
+      tour = twoOptImproveShared(tour, graph);
+
+      const pathLength = calculateTourLength(tour, graph);
+      visualizeTour(container, points, tour, "#fd7e14");
+
+      const endTime = performance.now();
+      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
+
+      return {
+        pathLength,
+        efficiency,
+        runtime: endTime - startTime,
+        complexity: "O(n²)",
+        bestFor: "Local then global optimization"
       };
     }
 
@@ -533,12 +668,13 @@
     async function runComparison() {
       const results = [];
 
-      // Generate points for all canvases
+      // Generate points for all canvases (5 methods now)
       const containers = [
         document.getElementById('canvas1'),
         document.getElementById('canvas2'),
         document.getElementById('canvas3'),
-        document.getElementById('canvas4')
+        document.getElementById('canvas4'),
+        document.getElementById('canvas5')
       ];
 
       containers.forEach(container => {
@@ -550,19 +686,24 @@
         container.upperBound = calculateUpperBound(container.graph);
       });
 
-      // Run methods
+      // Run methods sequentially from 1 to 5
       const methods = [
         { name: "Angular Sort", fn: runAngularSort, id: 1 },
         { name: "Zigzag Optimization", fn: runZigzagOptimization, id: 2 },
         { name: "2-Opt Optimization", fn: run2OptOptimization, id: 3 },
-        { name: "Hybrid Approach", fn: runHybridApproach, id: 4 }
+        { name: "Hybrid: 2-Opt → Zigzag", fn: runHybrid2OptThenZigzag, id: 4 },
+        { name: "Hybrid: Zigzag → 2-Opt", fn: runHybridZigzagThen2Opt, id: 5 }
       ];
 
+      // Execute methods sequentially (1 to 5)
       for (let i = 0; i < methods.length; i++) {
         const method = methods[i];
         const container = containers[i];
 
         document.getElementById(`progress${method.id}`).style.width = '50%';
+
+        // Small delay between methods to visualize sequential execution
+        await new Promise(resolve => setTimeout(resolve, 100));
 
         const result = await method.fn(
           container,
