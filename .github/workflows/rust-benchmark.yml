@@ -1,0 +1,65 @@
+name: Rust TSP Algorithm Benchmarks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('rust/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Build Rust benchmark (release mode)
+        run: cd rust && cargo build --release
+
+      - name: Run 30-second benchmark
+        id: benchmark_30
+        run: |
+          cd rust
+          echo "## Rust TSP Algorithms - 30 Second Benchmark" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          ./target/release/benchmark 30 2>&1 | tee benchmark_30.txt
+          cat benchmark_30.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Run 60-second benchmark
+        id: benchmark_60
+        run: |
+          cd rust
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Rust TSP Algorithms - 60 Second Benchmark" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          ./target/release/benchmark 60 2>&1 | tee benchmark_60.txt
+          cat benchmark_60.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: |
+            rust/benchmark_30.txt
+            rust/benchmark_60.txt
+
+      - name: Run Rust tests
+        run: cd rust && cargo test --release

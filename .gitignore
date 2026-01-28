@@ -131,3 +131,7 @@ dist
 
 # macOS
 .DS_Store
+
+# Rust
+rust/target/
+*.txt

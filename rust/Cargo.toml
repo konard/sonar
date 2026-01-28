@@ -1,0 +1,19 @@
+[package]
+name = "tsp-algorithms"
+version = "1.0.0"
+edition = "2021"
+description = "TSP (Traveling Salesman Problem) algorithms implemented in Rust"
+repository = "https://github.com/konard/sonar"
+license = "MIT"
+
+[[bin]]
+name = "benchmark"
+path = "src/main.rs"
+
+[dependencies]
+rand = "0.8"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
