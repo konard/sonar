@@ -18,9 +18,19 @@
       margin-bottom: 30px;
     }
 
+    .section-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #333;
+      margin: 30px 0 15px 0;
+      padding: 10px;
+      background: #e9ecef;
+      border-radius: 5px;
+    }
+
     .methods-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 20px;
       margin-bottom: 30px;
     }
@@ -33,7 +43,7 @@
     }
 
     .method-title {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: bold;
       margin-bottom: 10px;
       color: #333;
@@ -118,10 +128,15 @@
     }
 
     .method-description {
-      font-size: 14px;
+      font-size: 13px;
       color: #666;
       margin-bottom: 15px;
       line-height: 1.4;
+    }
+
+    .section-divider {
+      border-top: 2px solid #dee2e6;
+      margin: 20px 0;
     }
   </style>
 </head>
@@ -133,12 +148,13 @@
     <p id="grid-info" style="font-size: 12px; color: #666; margin-top: 10px;"></p>
   </div>
 
+  <div class="section-title">Sonar Visit Based Algorithms (O(1) base)</div>
   <div class="methods-container">
     <div class="method-card">
-      <div class="method-title">1. Angular Sort</div>
+      <div class="method-title">1. Sonar Visit</div>
       <div class="method-description">
-        Simple approach: sorts points by angle from center and connects them sequentially.
-        Fast but often suboptimal.
+        360° rotation sweep in fixed angle steps. Points on the same angle are connected by distance from center.
+        O(1) angle steps regardless of point count.
       </div>
       <div class="canvas-container"><div class="canvas-inner" id="canvas1"></div></div>
       <div class="progress"><div class="progress-bar" id="progress1"></div></div>
@@ -146,10 +162,10 @@
     </div>
 
     <div class="method-card">
-      <div class="method-title">2. Zigzag Optimization</div>
+      <div class="method-title">2. Sonar Visit → Zigzag</div>
       <div class="method-description">
-        Looks ahead to optimize local connections by checking if zigzag patterns
-        (skipping intermediate points) reduce total path length.
+        Sonar visit followed by zigzag local optimization.
+        O(1) base + O(n) zigzag refinement.
       </div>
       <div class="canvas-container"><div class="canvas-inner" id="canvas2"></div></div>
       <div class="progress"><div class="progress-bar" id="progress2"></div></div>
@@ -157,10 +173,10 @@
     </div>
 
     <div class="method-card">
-      <div class="method-title">3. 2-Opt Optimization</div>
+      <div class="method-title">3. Sonar Visit → 2-Opt</div>
       <div class="method-description">
-        Classic TSP improvement heuristic. Starts with nearest neighbor tour,
-        then iteratively improves by swapping edge pairs.
+        Sonar visit followed by 2-opt edge swapping.
+        O(1) base + O(n²) 2-opt refinement.
       </div>
       <div class="canvas-container"><div class="canvas-inner" id="canvas3"></div></div>
       <div class="progress"><div class="progress-bar" id="progress3"></div></div>
@@ -168,10 +184,10 @@
     </div>
 
     <div class="method-card">
-      <div class="method-title">4. Hybrid: 2-Opt → Zigzag</div>
+      <div class="method-title">4. Sonar Visit → Zigzag → 2-Opt</div>
       <div class="method-description">
-        Applies 2-opt optimization first, then refines with zigzag.
-        Combines global edge swapping with local path improvements.
+        Sonar visit, then zigzag local optimization, then 2-opt refinement.
+        Local improvements before global edge swapping.
       </div>
       <div class="canvas-container"><div class="canvas-inner" id="canvas4"></div></div>
       <div class="progress"><div class="progress-bar" id="progress4"></div></div>
@@ -179,25 +195,74 @@
     </div>
 
     <div class="method-card">
-      <div class="method-title">5. Hybrid: Zigzag → 2-Opt</div>
+      <div class="method-title">5. Sonar Visit → 2-Opt → Zigzag</div>
       <div class="method-description">
-        Applies zigzag optimization first, then refines with 2-opt.
-        Local improvements followed by global edge swapping.
+        Sonar visit, then 2-opt edge swapping, then zigzag refinement.
+        Global edge swapping before local improvements.
       </div>
       <div class="canvas-container"><div class="canvas-inner" id="canvas5"></div></div>
       <div class="progress"><div class="progress-bar" id="progress5"></div></div>
       <div class="stats" id="stats5">Initializing...</div>
     </div>
+  </div>
 
+  <div class="section-divider"></div>
+
+  <div class="section-title">Angular Sort Based Algorithms (O(n log n) base)</div>
+  <div class="methods-container">
     <div class="method-card">
-      <div class="method-title">6. Sonar Visit</div>
+      <div class="method-title">6. Angular Sort</div>
       <div class="method-description">
-        360° rotation sweep in fixed angle steps. Points on the same angle are connected sequentially.
-        Constant-time O(1) angle steps regardless of point count.
+        Sorts points by angle from center and connects them sequentially.
+        Fast O(n log n) but often suboptimal.
       </div>
       <div class="canvas-container"><div class="canvas-inner" id="canvas6"></div></div>
       <div class="progress"><div class="progress-bar" id="progress6"></div></div>
       <div class="stats" id="stats6">Initializing...</div>
+    </div>
+
+    <div class="method-card">
+      <div class="method-title">7. Angular Sort → Zigzag</div>
+      <div class="method-description">
+        Angular sort followed by zigzag local optimization.
+        Checks if skipping intermediate points reduces path length.
+      </div>
+      <div class="canvas-container"><div class="canvas-inner" id="canvas7"></div></div>
+      <div class="progress"><div class="progress-bar" id="progress7"></div></div>
+      <div class="stats" id="stats7">Initializing...</div>
+    </div>
+
+    <div class="method-card">
+      <div class="method-title">8. Angular Sort → 2-Opt</div>
+      <div class="method-description">
+        Angular sort followed by 2-opt edge swapping.
+        Iteratively swaps edge pairs to improve the tour.
+      </div>
+      <div class="canvas-container"><div class="canvas-inner" id="canvas8"></div></div>
+      <div class="progress"><div class="progress-bar" id="progress8"></div></div>
+      <div class="stats" id="stats8">Initializing...</div>
+    </div>
+
+    <div class="method-card">
+      <div class="method-title">9. Angular Sort → Zigzag → 2-Opt</div>
+      <div class="method-description">
+        Angular sort, then zigzag local optimization, then 2-opt refinement.
+        Local improvements before global edge swapping.
+      </div>
+      <div class="canvas-container"><div class="canvas-inner" id="canvas9"></div></div>
+      <div class="progress"><div class="progress-bar" id="progress9"></div></div>
+      <div class="stats" id="stats9">Initializing...</div>
+    </div>
+
+    <div class="method-card">
+      <div class="method-title">10. Angular Sort → 2-Opt → Zigzag</div>
+      <div class="method-description">
+        Angular sort, then 2-opt edge swapping, then zigzag refinement.
+        Global edge swapping before local improvements.
+      </div>
+      <div class="canvas-container"><div class="canvas-inner" id="canvas10"></div></div>
+      <div class="progress"><div class="progress-bar" id="progress10"></div></div>
+      <div class="stats" id="stats10">Initializing...</div>
     </div>
   </div>
 
@@ -220,10 +285,12 @@
     </table>
     <div style="font-size: 12px; color: #666; margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
       <strong>Complexity Notes:</strong><br>
-      • <strong>Angular Sort O(n log n)</strong>: Dominated by the sorting step<br>
       • <strong>Sonar Visit O(1)*</strong>: The angle sweep uses a fixed number of steps (4×GRID_SIZE) determined by grid resolution,
         not by point count. While point assignment to buckets is O(n), the core sweep algorithm is constant-time.
-        With sufficient grid precision, all point configurations can be handled in constant angle steps.
+        With sufficient grid precision, all point configurations can be handled in constant angle steps.<br>
+      • <strong>Angular Sort O(n log n)</strong>: Dominated by the sorting step<br>
+      • <strong>Zigzag O(n)</strong>: Linear pass through sorted points<br>
+      • <strong>2-Opt O(n²)</strong>: Nested loop checking all edge pairs
     </div>
   </div>
 
@@ -234,7 +301,7 @@
     }
 
     const NUM_POINTS = 50; // Fixed for fair comparison
-    const GRID_SIZE = 20; // Virtual N×N grid for point placement
+    const GRID_SIZE = 40; // Virtual N×N grid for point placement (doubled for denser grid)
 
     // Generate same points for all methods with random seed for variety on each reload
     const initialSeed = Math.floor(Math.random() * 1000000);
@@ -403,160 +470,12 @@
       }
     }
 
-    // Method implementations
-    async function runAngularSort(container, points, graph, lowerBound, upperBound) {
-      const startTime = performance.now();
+    // ========================================
+    // Shared optimization functions
+    // ========================================
 
-      const sortedPoints = [...points].sort((a, b) => a.angle - b.angle);
-      const tour = sortedPoints.map(p => p.id);
-      const pathLength = calculateTourLength(tour, graph);
-
-      visualizeTour(container, points, tour, "#007bff");
-
-      const endTime = performance.now();
-      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
-
-      return {
-        pathLength,
-        efficiency,
-        runtime: endTime - startTime,
-        complexity: "O(n log n)",
-        bestFor: "Quick approximate solutions"
-      };
-    }
-
-    async function runZigzagOptimization(container, points, graph, lowerBound, upperBound) {
-      const startTime = performance.now();
-
-      const sortedPoints = [...points].sort((a, b) => a.angle - b.angle);
-      const zigzag = (i) => {
-        const p1 = sortedPoints[(i - 1) % sortedPoints.length];
-        const p2 = sortedPoints[i % sortedPoints.length];
-        const p3 = sortedPoints[(i + 1) % sortedPoints.length];
-        const p4 = sortedPoints[(i + 2) % sortedPoints.length];
-        const segment1 = distance(p1, p2);
-        const segment3 = distance(p3, p4);
-        const zigZagSegment1 = distance(p1, p3);
-        const zigZagSegment3 = distance(p2, p4);
-        return (zigZagSegment1 + zigZagSegment3) < (segment1 + segment3);
-      };
-
-      const tour = [];
-      let i = 1;
-      while (i < sortedPoints.length) {
-        if (sortedPoints.length - i > 2 && zigzag(i)) {
-          tour.push(sortedPoints[i - 1].id);
-          tour.push(sortedPoints[(i + 1) % sortedPoints.length].id);
-          tour.push(sortedPoints[i % sortedPoints.length].id);
-          tour.push(sortedPoints[(i + 2) % sortedPoints.length].id);
-          i += 3;
-        } else {
-          tour.push(sortedPoints[i - 1].id);
-          tour.push(sortedPoints[i % sortedPoints.length].id);
-          i++;
-        }
-      }
-
-      // Remove duplicates while preserving order
-      const uniqueTour = [...new Set(tour)];
-      const pathLength = calculateTourLength(uniqueTour, graph);
-
-      visualizeTour(container, points, uniqueTour, "#28a745");
-
-      const endTime = performance.now();
-      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
-
-      return {
-        pathLength,
-        efficiency,
-        runtime: endTime - startTime,
-        complexity: "O(n log n)",
-        bestFor: "Local optimization"
-      };
-    }
-
-    async function run2OptOptimization(container, points, graph, lowerBound, upperBound) {
-      const startTime = performance.now();
-
-      // Nearest neighbor initial tour
-      function nearestNeighborTour(points, graph) {
-        const n = points.length;
-        const visited = new Array(n).fill(false);
-        const tour = [0];
-        visited[0] = true;
-        let current = 0;
-
-        for (let step = 1; step < n; step++) {
-          let nearest = -1;
-          let minDist = Infinity;
-
-          for (let j = 0; j < n; j++) {
-            if (!visited[j] && graph[current][j] < minDist) {
-              minDist = graph[current][j];
-              nearest = j;
-            }
-          }
-
-          tour.push(nearest);
-          visited[nearest] = true;
-          current = nearest;
-        }
-
-        return tour;
-      }
-
-      // 2-opt improvement
-      function twoOptImprove(tour, graph, maxIterations = 100) {
-        const n = tour.length;
-        let improved = true;
-        let iterations = 0;
-
-        while (improved && iterations < maxIterations) {
-          improved = false;
-          iterations++;
-
-          for (let i = 0; i < n - 1; i++) {
-            for (let j = i + 2; j < n; j++) {
-              if (j === n - 1 && i === 0) continue;
-
-              const currentDistance = graph[tour[i]][tour[i + 1]] + graph[tour[j]][tour[(j + 1) % n]];
-              const newDistance = graph[tour[i]][tour[j]] + graph[tour[i + 1]][tour[(j + 1) % n]];
-
-              if (newDistance < currentDistance) {
-                const newTour = [...tour];
-                for (let k = 0; k <= j - i - 1; k++) {
-                  newTour[i + 1 + k] = tour[j - k];
-                }
-                tour = newTour;
-                improved = true;
-              }
-            }
-          }
-        }
-
-        return tour;
-      }
-
-      let tour = nearestNeighborTour(points, graph);
-      tour = twoOptImprove(tour, graph);
-      const pathLength = calculateTourLength(tour, graph);
-
-      visualizeTour(container, points, tour, "#dc3545");
-
-      const endTime = performance.now();
-      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
-
-      return {
-        pathLength,
-        efficiency,
-        runtime: endTime - startTime,
-        complexity: "O(n²)",
-        bestFor: "High-quality solutions"
-      };
-    }
-
-    // Helper: 2-opt improvement function (shared by hybrid methods)
-    function twoOptImproveShared(tour, graph, maxIterations = 100) {
+    // 2-opt improvement function
+    function twoOptImprove(tour, graph, maxIterations = 100) {
       const n = tour.length;
       let improved = true;
       let iterations = 0;
@@ -587,7 +506,7 @@
       return tour;
     }
 
-    // Helper: Apply zigzag optimization on a tour
+    // Apply zigzag optimization on a tour (given as array of point IDs)
     function applyZigzagOnTour(tourIndices, points, graph) {
       // Convert tour indices to points in tour order
       const tourPoints = tourIndices.map(idx => ({ ...points[idx], originalId: idx }));
@@ -624,124 +543,13 @@
       return [...new Set(newTour)];
     }
 
-    // Method 4: Hybrid 2-Opt → Zigzag
-    async function runHybrid2OptThenZigzag(container, points, graph, lowerBound, upperBound) {
-      const startTime = performance.now();
+    // ========================================
+    // Sonar Visit based methods (1-5)
+    // ========================================
 
-      // Step 1: Nearest neighbor initial tour
-      function nearestNeighborTour(points, graph) {
-        const n = points.length;
-        const visited = new Array(n).fill(false);
-        const tour = [0];
-        visited[0] = true;
-        let current = 0;
-
-        for (let step = 1; step < n; step++) {
-          let nearest = -1;
-          let minDist = Infinity;
-
-          for (let j = 0; j < n; j++) {
-            if (!visited[j] && graph[current][j] < minDist) {
-              minDist = graph[current][j];
-              nearest = j;
-            }
-          }
-
-          tour.push(nearest);
-          visited[nearest] = true;
-          current = nearest;
-        }
-
-        return tour;
-      }
-
-      // Step 2: Apply 2-opt optimization first
-      let tour = nearestNeighborTour(points, graph);
-      tour = twoOptImproveShared(tour, graph);
-
-      // Step 3: Apply zigzag refinement
-      tour = applyZigzagOnTour(tour, points, graph);
-
-      const pathLength = calculateTourLength(tour, graph);
-      visualizeTour(container, points, tour, "#6f42c1");
-
-      const endTime = performance.now();
-      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
-
-      return {
-        pathLength,
-        efficiency,
-        runtime: endTime - startTime,
-        complexity: "O(n²)",
-        bestFor: "Global then local optimization"
-      };
-    }
-
-    // Method 5: Hybrid Zigzag → 2-Opt
-    async function runHybridZigzagThen2Opt(container, points, graph, lowerBound, upperBound) {
-      const startTime = performance.now();
-
-      // Step 1: Apply zigzag optimization on angular sorted points
-      const sortedPoints = [...points].sort((a, b) => a.angle - b.angle);
-
-      const zigzag = (i) => {
-        const p1 = sortedPoints[(i - 1) % sortedPoints.length];
-        const p2 = sortedPoints[i % sortedPoints.length];
-        const p3 = sortedPoints[(i + 1) % sortedPoints.length];
-        const p4 = sortedPoints[(i + 2) % sortedPoints.length];
-        const segment1 = distance(p1, p2);
-        const segment3 = distance(p3, p4);
-        const zigZagSegment1 = distance(p1, p3);
-        const zigZagSegment3 = distance(p2, p4);
-        return (zigZagSegment1 + zigZagSegment3) < (segment1 + segment3);
-      };
-
-      let tour = [];
-      let i = 1;
-      while (i < sortedPoints.length) {
-        if (sortedPoints.length - i > 2 && zigzag(i)) {
-          tour.push(sortedPoints[i - 1].id);
-          tour.push(sortedPoints[(i + 1) % sortedPoints.length].id);
-          tour.push(sortedPoints[i % sortedPoints.length].id);
-          tour.push(sortedPoints[(i + 2) % sortedPoints.length].id);
-          i += 3;
-        } else {
-          tour.push(sortedPoints[i - 1].id);
-          tour.push(sortedPoints[i % sortedPoints.length].id);
-          i++;
-        }
-      }
-
-      // Remove duplicates while preserving order
-      tour = [...new Set(tour)];
-
-      // Step 2: Apply 2-opt refinement
-      tour = twoOptImproveShared(tour, graph);
-
-      const pathLength = calculateTourLength(tour, graph);
-      visualizeTour(container, points, tour, "#fd7e14");
-
-      const endTime = performance.now();
-      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
-
-      return {
-        pathLength,
-        efficiency,
-        runtime: endTime - startTime,
-        complexity: "O(n²)",
-        bestFor: "Local then global optimization"
-      };
-    }
-
-    // Method 6: Sonar Visit - O(1) angle steps algorithm
-    // Uses a 360° rotation sweep with fixed angle steps determined by grid size
-    // Points on the same angle are connected by distance from center
-    async function runSonarVisit(container, points, graph, lowerBound, upperBound) {
-      const startTime = performance.now();
-
-      // Calculate angle step based on grid size to ensure we visit all grid intersections
-      // For an N×N grid, we need at most 4*N angle steps to cover all possible angles
-      // This is O(1) with respect to point count - only depends on grid resolution
+    // Generate Sonar Visit tour (O(1) angle steps)
+    function generateSonarVisitTour(points) {
+      // Calculate angle step based on grid size
       const angleSteps = 4 * GRID_SIZE;
       const angleStep = (2 * Math.PI) / angleSteps;
 
@@ -749,11 +557,9 @@
       const angleBuckets = new Map();
 
       points.forEach(point => {
-        // Normalize angle to 0 to 2*PI
         let angle = point.angle;
         if (angle < 0) angle += 2 * Math.PI;
 
-        // Find which bucket this point belongs to
         const bucketIndex = Math.floor(angle / angleStep);
         if (!angleBuckets.has(bucketIndex)) {
           angleBuckets.set(bucketIndex, []);
@@ -761,7 +567,7 @@
         angleBuckets.get(bucketIndex).push(point);
       });
 
-      // Sort points within each bucket by distance from center (outward sweep)
+      // Sort points within each bucket by distance from center
       const center = { x: 0.5, y: 0.5 };
       angleBuckets.forEach((bucketPoints, key) => {
         bucketPoints.sort((a, b) => {
@@ -780,9 +586,15 @@
         }
       }
 
+      return tour;
+    }
+
+    // Method 1: Sonar Visit (base)
+    async function runSonarVisit(container, points, graph, lowerBound, upperBound) {
+      const startTime = performance.now();
+      const tour = generateSonarVisitTour(points);
       const pathLength = calculateTourLength(tour, graph);
       visualizeTour(container, points, tour, "#17a2b8");
-
       const endTime = performance.now();
       const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
 
@@ -795,26 +607,207 @@
       };
     }
 
+    // Method 2: Sonar Visit → Zigzag
+    async function runSonarVisitZigzag(container, points, graph, lowerBound, upperBound) {
+      const startTime = performance.now();
+      let tour = generateSonarVisitTour(points);
+      tour = applyZigzagOnTour(tour, points, graph);
+      const pathLength = calculateTourLength(tour, graph);
+      visualizeTour(container, points, tour, "#20c997");
+      const endTime = performance.now();
+      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
+
+      return {
+        pathLength,
+        efficiency,
+        runtime: endTime - startTime,
+        complexity: "O(n)",
+        bestFor: "Fast local optimization"
+      };
+    }
+
+    // Method 3: Sonar Visit → 2-Opt
+    async function runSonarVisit2Opt(container, points, graph, lowerBound, upperBound) {
+      const startTime = performance.now();
+      let tour = generateSonarVisitTour(points);
+      tour = twoOptImprove(tour, graph);
+      const pathLength = calculateTourLength(tour, graph);
+      visualizeTour(container, points, tour, "#007bff");
+      const endTime = performance.now();
+      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
+
+      return {
+        pathLength,
+        efficiency,
+        runtime: endTime - startTime,
+        complexity: "O(n²)",
+        bestFor: "High-quality from O(1) base"
+      };
+    }
+
+    // Method 4: Sonar Visit → Zigzag → 2-Opt
+    async function runSonarVisitZigzag2Opt(container, points, graph, lowerBound, upperBound) {
+      const startTime = performance.now();
+      let tour = generateSonarVisitTour(points);
+      tour = applyZigzagOnTour(tour, points, graph);
+      tour = twoOptImprove(tour, graph);
+      const pathLength = calculateTourLength(tour, graph);
+      visualizeTour(container, points, tour, "#6f42c1");
+      const endTime = performance.now();
+      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
+
+      return {
+        pathLength,
+        efficiency,
+        runtime: endTime - startTime,
+        complexity: "O(n²)",
+        bestFor: "Local then global optimization"
+      };
+    }
+
+    // Method 5: Sonar Visit → 2-Opt → Zigzag
+    async function runSonarVisit2OptZigzag(container, points, graph, lowerBound, upperBound) {
+      const startTime = performance.now();
+      let tour = generateSonarVisitTour(points);
+      tour = twoOptImprove(tour, graph);
+      tour = applyZigzagOnTour(tour, points, graph);
+      const pathLength = calculateTourLength(tour, graph);
+      visualizeTour(container, points, tour, "#e83e8c");
+      const endTime = performance.now();
+      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
+
+      return {
+        pathLength,
+        efficiency,
+        runtime: endTime - startTime,
+        complexity: "O(n²)",
+        bestFor: "Global then local optimization"
+      };
+    }
+
+    // ========================================
+    // Angular Sort based methods (6-10)
+    // ========================================
+
+    // Generate Angular Sort tour
+    function generateAngularSortTour(points) {
+      const sortedPoints = [...points].sort((a, b) => a.angle - b.angle);
+      return sortedPoints.map(p => p.id);
+    }
+
+    // Method 6: Angular Sort (base)
+    async function runAngularSort(container, points, graph, lowerBound, upperBound) {
+      const startTime = performance.now();
+      const tour = generateAngularSortTour(points);
+      const pathLength = calculateTourLength(tour, graph);
+      visualizeTour(container, points, tour, "#fd7e14");
+      const endTime = performance.now();
+      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
+
+      return {
+        pathLength,
+        efficiency,
+        runtime: endTime - startTime,
+        complexity: "O(n log n)",
+        bestFor: "Quick approximate solutions"
+      };
+    }
+
+    // Method 7: Angular Sort → Zigzag
+    async function runAngularSortZigzag(container, points, graph, lowerBound, upperBound) {
+      const startTime = performance.now();
+      let tour = generateAngularSortTour(points);
+      tour = applyZigzagOnTour(tour, points, graph);
+      const pathLength = calculateTourLength(tour, graph);
+      visualizeTour(container, points, tour, "#28a745");
+      const endTime = performance.now();
+      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
+
+      return {
+        pathLength,
+        efficiency,
+        runtime: endTime - startTime,
+        complexity: "O(n log n)",
+        bestFor: "Local optimization"
+      };
+    }
+
+    // Method 8: Angular Sort → 2-Opt
+    async function runAngularSort2Opt(container, points, graph, lowerBound, upperBound) {
+      const startTime = performance.now();
+      let tour = generateAngularSortTour(points);
+      tour = twoOptImprove(tour, graph);
+      const pathLength = calculateTourLength(tour, graph);
+      visualizeTour(container, points, tour, "#dc3545");
+      const endTime = performance.now();
+      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
+
+      return {
+        pathLength,
+        efficiency,
+        runtime: endTime - startTime,
+        complexity: "O(n²)",
+        bestFor: "High-quality solutions"
+      };
+    }
+
+    // Method 9: Angular Sort → Zigzag → 2-Opt
+    async function runAngularSortZigzag2Opt(container, points, graph, lowerBound, upperBound) {
+      const startTime = performance.now();
+      let tour = generateAngularSortTour(points);
+      tour = applyZigzagOnTour(tour, points, graph);
+      tour = twoOptImprove(tour, graph);
+      const pathLength = calculateTourLength(tour, graph);
+      visualizeTour(container, points, tour, "#6610f2");
+      const endTime = performance.now();
+      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
+
+      return {
+        pathLength,
+        efficiency,
+        runtime: endTime - startTime,
+        complexity: "O(n²)",
+        bestFor: "Local then global optimization"
+      };
+    }
+
+    // Method 10: Angular Sort → 2-Opt → Zigzag
+    async function runAngularSort2OptZigzag(container, points, graph, lowerBound, upperBound) {
+      const startTime = performance.now();
+      let tour = generateAngularSortTour(points);
+      tour = twoOptImprove(tour, graph);
+      tour = applyZigzagOnTour(tour, points, graph);
+      const pathLength = calculateTourLength(tour, graph);
+      visualizeTour(container, points, tour, "#795548");
+      const endTime = performance.now();
+      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
+
+      return {
+        pathLength,
+        efficiency,
+        runtime: endTime - startTime,
+        complexity: "O(n²)",
+        bestFor: "Global then local optimization"
+      };
+    }
+
     // Main execution
     async function runComparison() {
       const results = [];
+      const numMethods = 10;
 
-      // Generate points for all canvases (6 methods now)
-      const containers = [
-        document.getElementById('canvas1'),
-        document.getElementById('canvas2'),
-        document.getElementById('canvas3'),
-        document.getElementById('canvas4'),
-        document.getElementById('canvas5'),
-        document.getElementById('canvas6')
-      ];
+      // Generate containers for all methods
+      const containers = [];
+      for (let i = 1; i <= numMethods; i++) {
+        containers.push(document.getElementById(`canvas${i}`));
+      }
 
       // Generate normalized points once (same for all canvases)
       const normalizedPoints = generateNormalizedPoints(NUM_POINTS);
 
       containers.forEach(container => {
         // Get actual canvas size
-        const canvasSize = container.offsetWidth || 250; // Fallback to 250 if not yet rendered
+        const canvasSize = container.offsetWidth || 250;
 
         // Scale points to current canvas size
         const points = scalePoints(normalizedPoints, canvasSize);
@@ -827,17 +820,23 @@
         container.upperBound = calculateUpperBound(container.graph);
       });
 
-      // Run methods sequentially from 1 to 6
+      // Define all methods in order
       const methods = [
-        { name: "Angular Sort", fn: runAngularSort, id: 1 },
-        { name: "Zigzag Optimization", fn: runZigzagOptimization, id: 2 },
-        { name: "2-Opt Optimization", fn: run2OptOptimization, id: 3 },
-        { name: "Hybrid: 2-Opt → Zigzag", fn: runHybrid2OptThenZigzag, id: 4 },
-        { name: "Hybrid: Zigzag → 2-Opt", fn: runHybridZigzagThen2Opt, id: 5 },
-        { name: "Sonar Visit", fn: runSonarVisit, id: 6 }
+        // Sonar Visit based (1-5)
+        { name: "Sonar Visit", fn: runSonarVisit, id: 1 },
+        { name: "Sonar Visit → Zigzag", fn: runSonarVisitZigzag, id: 2 },
+        { name: "Sonar Visit → 2-Opt", fn: runSonarVisit2Opt, id: 3 },
+        { name: "Sonar Visit → Zigzag → 2-Opt", fn: runSonarVisitZigzag2Opt, id: 4 },
+        { name: "Sonar Visit → 2-Opt → Zigzag", fn: runSonarVisit2OptZigzag, id: 5 },
+        // Angular Sort based (6-10)
+        { name: "Angular Sort", fn: runAngularSort, id: 6 },
+        { name: "Angular Sort → Zigzag", fn: runAngularSortZigzag, id: 7 },
+        { name: "Angular Sort → 2-Opt", fn: runAngularSort2Opt, id: 8 },
+        { name: "Angular Sort → Zigzag → 2-Opt", fn: runAngularSortZigzag2Opt, id: 9 },
+        { name: "Angular Sort → 2-Opt → Zigzag", fn: runAngularSort2OptZigzag, id: 10 }
       ];
 
-      // Execute methods sequentially (1 to 5)
+      // Execute methods sequentially
       for (let i = 0; i < methods.length; i++) {
         const method = methods[i];
         const container = containers[i];
@@ -845,7 +844,7 @@
         document.getElementById(`progress${method.id}`).style.width = '50%';
 
         // Small delay between methods to visualize sequential execution
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         const result = await method.fn(
           container,
@@ -902,22 +901,16 @@
 
     // Re-render canvases on resize
     const handleResize = debounce(() => {
-      // Clear all canvases and re-run
-      const containers = [
-        document.getElementById('canvas1'),
-        document.getElementById('canvas2'),
-        document.getElementById('canvas3'),
-        document.getElementById('canvas4'),
-        document.getElementById('canvas5'),
-        document.getElementById('canvas6')
-      ];
-
-      containers.forEach(container => {
+      const numMethods = 10;
+      const containers = [];
+      for (let i = 1; i <= numMethods; i++) {
+        const container = document.getElementById(`canvas${i}`);
         container.innerHTML = '';
-      });
+        containers.push(container);
+      }
 
       // Reset progress bars and stats
-      for (let i = 1; i <= 6; i++) {
+      for (let i = 1; i <= numMethods; i++) {
         document.getElementById(`progress${i}`).style.width = '0%';
         document.getElementById(`stats${i}`).innerHTML = 'Resizing...';
       }
