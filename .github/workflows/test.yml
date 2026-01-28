@@ -20,3 +20,6 @@ jobs:
 
       - name: Run algorithm tests
         run: node tests/algorithms.test.js
+
+      - name: Run performance tests (60s timeout for CI)
+        run: node tests/performance.test.js --ci
