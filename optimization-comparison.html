@@ -5,6 +5,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Path Optimization Methods Comparison</title>
+  <!-- Algorithm modules - loaded from ./algorithms folder -->
+  <script src="algorithms/utils.js"></script>
+  <script src="algorithms/two-opt.js"></script>
+  <script src="algorithms/zigzag.js"></script>
+  <script src="algorithms/sonar-visit.js"></script>
+  <script src="algorithms/angular-sort.js"></script>
+  <script src="algorithms/nearest-neighbor.js"></script>
+  <script src="algorithms/greedy-edge.js"></script>
+  <script src="algorithms/simulated-annealing.js"></script>
+  <script src="algorithms/genetic.js"></script>
+  <script src="algorithms/brute-force.js"></script>
   <style>
     :root {
       font-size: 16px;
@@ -26,6 +37,15 @@
       font-size: 0.75rem;
       color: #666;
       margin-top: 0.625rem;
+    }
+
+    .header-info a {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    .header-info a:hover {
+      text-decoration: underline;
     }
 
     .section-title {
@@ -62,7 +82,7 @@
     .canvas-container {
       position: relative;
       width: 100%;
-      padding-bottom: 100%; /* Maintain aspect ratio 1:1 */
+      padding-bottom: 100%;
       background: white;
       border: 0.0625rem solid #ccc;
       border-radius: 50%;
@@ -167,7 +187,6 @@
       border-radius: 0.3125rem;
     }
 
-    /* Mobile responsiveness improvements */
     @media (max-width: 48rem) {
       body {
         padding: 0.75rem;
@@ -214,6 +233,9 @@
     <h1>Path Optimization Methods Comparison</h1>
     <p>Comparing different approaches to solve the Traveling Salesman Problem</p>
     <p id="grid-info" class="header-info"></p>
+    <p class="header-info">
+      <a href="https://github.com/konard/sonar" target="_blank" rel="noopener noreferrer">View source code on GitHub</a>
+    </p>
   </div>
 
   <div class="section-title">Sonar Visit Based Algorithms (O(1) base)</div>
@@ -221,7 +243,7 @@
     <div class="method-card">
       <div class="method-title">1. Sonar Visit</div>
       <div class="method-description">
-        360° rotation sweep in fixed angle steps. Points on the same angle are connected by distance from center.
+        360 degree rotation sweep in fixed angle steps. Points on the same angle are connected by distance from center.
         O(1) angle steps regardless of point count.
       </div>
       <div class="canvas-container"><div class="canvas-inner" id="canvas1"></div></div>
@@ -230,7 +252,7 @@
     </div>
 
     <div class="method-card">
-      <div class="method-title">2. Sonar Visit → Zigzag</div>
+      <div class="method-title">2. Sonar Visit + Zigzag</div>
       <div class="method-description">
         Sonar visit followed by zigzag local optimization.
         O(1) base + O(n) zigzag refinement.
@@ -241,10 +263,10 @@
     </div>
 
     <div class="method-card">
-      <div class="method-title">3. Sonar Visit → 2-Opt</div>
+      <div class="method-title">3. Sonar Visit + 2-Opt</div>
       <div class="method-description">
         Sonar visit followed by 2-opt edge swapping.
-        O(1) base + O(n²) 2-opt refinement.
+        O(1) base + O(n squared) 2-opt refinement.
       </div>
       <div class="canvas-container"><div class="canvas-inner" id="canvas3"></div></div>
       <div class="progress"><div class="progress-bar" id="progress3"></div></div>
@@ -252,7 +274,7 @@
     </div>
 
     <div class="method-card">
-      <div class="method-title">4. Sonar Visit → Zigzag → 2-Opt</div>
+      <div class="method-title">4. Sonar Visit + Zigzag + 2-Opt</div>
       <div class="method-description">
         Sonar visit, then zigzag local optimization, then 2-opt refinement.
         Local improvements before global edge swapping.
@@ -263,7 +285,7 @@
     </div>
 
     <div class="method-card">
-      <div class="method-title">5. Sonar Visit → 2-Opt → Zigzag</div>
+      <div class="method-title">5. Sonar Visit + 2-Opt + Zigzag</div>
       <div class="method-description">
         Sonar visit, then 2-opt edge swapping, then zigzag refinement.
         Global edge swapping before local improvements.
@@ -290,7 +312,7 @@
     </div>
 
     <div class="method-card">
-      <div class="method-title">7. Angular Sort → Zigzag</div>
+      <div class="method-title">7. Angular Sort + Zigzag</div>
       <div class="method-description">
         Angular sort followed by zigzag local optimization.
         Checks if skipping intermediate points reduces path length.
@@ -301,7 +323,7 @@
     </div>
 
     <div class="method-card">
-      <div class="method-title">8. Angular Sort → 2-Opt</div>
+      <div class="method-title">8. Angular Sort + 2-Opt</div>
       <div class="method-description">
         Angular sort followed by 2-opt edge swapping.
         Iteratively swaps edge pairs to improve the tour.
@@ -312,7 +334,7 @@
     </div>
 
     <div class="method-card">
-      <div class="method-title">9. Angular Sort → Zigzag → 2-Opt</div>
+      <div class="method-title">9. Angular Sort + Zigzag + 2-Opt</div>
       <div class="method-description">
         Angular sort, then zigzag local optimization, then 2-opt refinement.
         Local improvements before global edge swapping.
@@ -323,7 +345,7 @@
     </div>
 
     <div class="method-card">
-      <div class="method-title">10. Angular Sort → 2-Opt → Zigzag</div>
+      <div class="method-title">10. Angular Sort + 2-Opt + Zigzag</div>
       <div class="method-description">
         Angular sort, then 2-opt edge swapping, then zigzag refinement.
         Global edge swapping before local improvements.
@@ -342,7 +364,7 @@
       <div class="method-title">11. Nearest Neighbor</div>
       <div class="method-description">
         Greedy heuristic: start from a random point and always visit the closest unvisited point.
-        Fast O(n²) but can produce suboptimal tours.
+        Fast O(n squared) but can produce suboptimal tours.
       </div>
       <div class="canvas-container"><div class="canvas-inner" id="canvas11"></div></div>
       <div class="progress"><div class="progress-bar" id="progress11"></div></div>
@@ -352,8 +374,8 @@
     <div class="method-card">
       <div class="method-title">12. Greedy (Nearest Edge)</div>
       <div class="method-description">
-        Builds tour by repeatedly adding the shortest edge that doesn't create a cycle or degree > 2.
-        O(n² log n) with good average performance.
+        Builds tour by repeatedly adding the shortest edge that does not create a cycle or degree greater than 2.
+        O(n squared log n) with good average performance.
       </div>
       <div class="canvas-container"><div class="canvas-inner" id="canvas12"></div></div>
       <div class="progress"><div class="progress-bar" id="progress12"></div></div>
@@ -413,49 +435,49 @@
     </table>
     <div class="complexity-notes">
       <strong>Complexity Notes:</strong><br>
-      • <strong>Sonar Visit O(1)*</strong>: The angle sweep uses a fixed number of steps (4×GRID_SIZE) determined by grid resolution,
+      <strong>Sonar Visit O(1)*</strong>: The angle sweep uses a fixed number of steps (4 times GRID_SIZE) determined by grid resolution,
         not by point count. While point assignment to buckets is O(n), the core sweep algorithm is constant-time.
         With sufficient grid precision, all point configurations can be handled in constant angle steps.<br>
-      • <strong>Angular Sort O(n log n)</strong>: Dominated by the sorting step<br>
-      • <strong>Zigzag O(n)</strong>: Linear pass through sorted points<br>
-      • <strong>2-Opt O(n²)</strong>: Nested loop checking all edge pairs<br>
-      • <strong>Nearest Neighbor O(n²)</strong>: Greedy selection of closest unvisited city<br>
-      • <strong>Greedy Edge O(n² log n)</strong>: Sort all edges, then greedy selection avoiding cycles<br>
-      • <strong>Simulated Annealing O(n × iterations)</strong>: Probabilistic optimization with cooling schedule<br>
-      • <strong>Genetic Algorithm O(pop × gen × n)</strong>: Evolutionary optimization with crossover and mutation<br>
-      • <strong>Brute Force O(n!)</strong>: Exhaustive search for optimal solution (uses Held-Karp O(2ⁿ × n²) for n>10)<br>
+      <strong>Angular Sort O(n log n)</strong>: Dominated by the sorting step<br>
+      <strong>Zigzag O(n)</strong>: Linear pass through sorted points<br>
+      <strong>2-Opt O(n squared)</strong>: Nested loop checking all edge pairs<br>
+      <strong>Nearest Neighbor O(n squared)</strong>: Greedy selection of closest unvisited city<br>
+      <strong>Greedy Edge O(n squared log n)</strong>: Sort all edges, then greedy selection avoiding cycles<br>
+      <strong>Simulated Annealing O(n times iterations)</strong>: Probabilistic optimization with cooling schedule<br>
+      <strong>Genetic Algorithm O(pop times gen times n)</strong>: Evolutionary optimization with crossover and mutation<br>
+      <strong>Brute Force O(n!)</strong>: Exhaustive search for optimal solution (uses Held-Karp O(2^n times n squared) for n greater than 10)<br>
       <br>
-      <strong>Efficiency Calculation:</strong> All efficiencies are calculated as (optimal_length / algorithm_length) × 100%,
-      where optimal_length is determined by the Brute Force algorithm.
+      <strong>Efficiency Calculation:</strong> All efficiencies are calculated as (optimal_length / algorithm_length) times 100%,
+      where optimal_length is determined by the Brute Force algorithm. Efficiency is capped at 100%.
     </div>
   </div>
 
   <script>
-    // Shared utilities
-    function randomIntFromInterval(min, max) {
-      return Math.floor(Math.random() * (max - min + 1) + min);
-    }
+    // Configuration - using modules from ./algorithms folder
+    // Use 10 points for guaranteed true optimal via brute force O(n!)
+    // This ensures efficiency calculations are always accurate (no algorithm can exceed 100%)
+    const NUM_POINTS = 10;
+    const GRID_SIZE = 40;
 
-    const NUM_POINTS = 48; // Small enough for true optimal calculation via Held-Karp
-    const GRID_SIZE = 40; // Virtual N×N grid for point placement (doubled for denser grid)
-
-    // Generate same points for all methods with random seed for variety on each reload
+    // Generate random seed for variety on each reload
     const initialSeed = Math.floor(Math.random() * 1000000);
 
-    // Generate points on a virtual N×N grid for consistent placement
-    // This enables O(1) sonar visit as angle steps are determined by grid size, not point count
+    // Use utility functions from loaded modules
+    const distance = TSPUtils.distance;
+    const createDistanceMatrix = TSPUtils.createDistanceMatrix;
+    const calculateTourLength = TSPUtils.calculateTourLength;
+    const calculateMST = TSPUtils.calculateMST;
+
+    // Generate points on a virtual grid for consistent placement
     const generateNormalizedPoints = (numPoints, gridSize = GRID_SIZE, seed = initialSeed) => {
-      // Simple LCG for reproducible results within same page load
       let currentSeed = seed;
       const rng = () => {
         currentSeed = (currentSeed * 1103515245 + 12345) % (2**31);
         return currentSeed / (2**31);
       };
 
-      const center = 0.5; // Normalized center
-      const maxRadius = 0.45; // Leave some padding from edges
-
-      // Generate all valid grid positions within the circular area
+      const center = 0.5;
+      const maxRadius = 0.45;
       const gridStep = 1 / gridSize;
       const validPositions = [];
 
@@ -467,7 +489,6 @@
           const dy = y - center;
           const distFromCenter = Math.sqrt(dx * dx + dy * dy);
 
-          // Only include points within the circular area
           if (distFromCenter <= maxRadius) {
             const angle = Math.atan2(dy, dx);
             validPositions.push({ x, y, angle: angle < 0 ? angle + 2 * Math.PI : angle, gx, gy });
@@ -475,20 +496,16 @@
         }
       }
 
-      // Shuffle valid positions using Fisher-Yates
+      // Fisher-Yates shuffle
       for (let i = validPositions.length - 1; i > 0; i--) {
         const j = Math.floor(rng() * (i + 1));
         [validPositions[i], validPositions[j]] = [validPositions[j], validPositions[i]];
       }
 
-      // Select numPoints from shuffled positions
       const points = validPositions.slice(0, Math.min(numPoints, validPositions.length));
-
-      // Assign IDs
       return points.map((p, idx) => ({ ...p, id: idx }));
     };
 
-    // Scale normalized points to percentage values (0-100%)
     const scalePointsToPercent = (normalizedPoints) => {
       return normalizedPoints.map(p => ({
         ...p,
@@ -497,78 +514,15 @@
       }));
     };
 
-    // Distance using normalized coordinates for consistent calculations
-    const distance = (start, end) => Math.hypot(end.y - start.y, end.x - start.x);
-
-    function createDistanceMatrix(points) {
-      const n = points.length;
-      const graph = Array.from({ length: n }, () => Array(n).fill(0));
-      for (let i = 0; i < n; i++) {
-        for (let j = 0; j < n; j++) {
-          if (i !== j) {
-            graph[i][j] = distance(points[i], points[j]);
-          }
-        }
-      }
-      return graph;
+    // Calculate efficiency: optimal/solution * 100 (capped at 100%)
+    function calculateEfficiency(solutionLength, optimalLength) {
+      if (solutionLength <= 0) return 0;
+      const efficiency = (optimalLength / solutionLength) * 100;
+      return Math.min(efficiency, 100); // Cap at 100% for display
     }
 
-    function calculateMST(graph) {
-      const n = graph.length;
-      const selected = new Array(n).fill(false);
-      selected[0] = true;
-      let edgeCount = 0;
-      let mstWeight = 0;
-
-      while (edgeCount < n - 1) {
-        let min = Infinity;
-        let x = 0, y = 0;
-        for (let i = 0; i < n; i++) {
-          if (selected[i]) {
-            for (let j = 0; j < n; j++) {
-              if (!selected[j] && graph[i][j]) {
-                if (min > graph[i][j]) {
-                  min = graph[i][j];
-                  x = i;
-                  y = j;
-                }
-              }
-            }
-          }
-        }
-        mstWeight += graph[x][y];
-        selected[y] = true;
-        edgeCount++;
-      }
-      return mstWeight;
-    }
-
-    function calculateUpperBound(graph) {
-      const n = graph.length;
-      let maxTour = 0;
-      for (let i = 0; i < n; i++) {
-        let maxEdge = Math.max(...graph[i]);
-        maxTour += maxEdge;
-      }
-      return maxTour;
-    }
-
-    function calculateTourLength(tour, graph) {
-      let totalDistance = 0;
-      const n = tour.length;
-      for (let i = 0; i < n; i++) {
-        totalDistance += graph[tour[i]][tour[(i + 1) % n]];
-      }
-      return totalDistance;
-    }
-
-    function calculateEfficiency(solutionPathLength, minimumPossiblePathLength, maximumPossiblePathLength) {
-      return ((maximumPossiblePathLength - solutionPathLength) / (maximumPossiblePathLength - minimumPossiblePathLength)) * 100;
-    }
-
-    // Draw line segment using percentage-based positioning
+    // Drawing functions
     function drawLineSegment(container, start, end, color = "green", opacity = 1) {
-      // Calculate length and angle in percentage space
       const dx = end.percentX - start.percentX;
       const dy = end.percentY - start.percentY;
       const length = Math.hypot(dx, dy);
@@ -604,839 +558,242 @@
       }
     }
 
-    // ========================================
-    // Shared optimization functions
-    // ========================================
-
-    // 2-opt improvement function
-    function twoOptImprove(tour, graph, maxIterations = 100) {
-      const n = tour.length;
-      let improved = true;
-      let iterations = 0;
-
-      while (improved && iterations < maxIterations) {
-        improved = false;
-        iterations++;
-
-        for (let i = 0; i < n - 1; i++) {
-          for (let j = i + 2; j < n; j++) {
-            if (j === n - 1 && i === 0) continue;
-
-            const currentDistance = graph[tour[i]][tour[i + 1]] + graph[tour[j]][tour[(j + 1) % n]];
-            const newDistance = graph[tour[i]][tour[j]] + graph[tour[i + 1]][tour[(j + 1) % n]];
-
-            if (newDistance < currentDistance) {
-              const newTour = [...tour];
-              for (let k = 0; k <= j - i - 1; k++) {
-                newTour[i + 1 + k] = tour[j - k];
-              }
-              tour = newTour;
-              improved = true;
-            }
-          }
-        }
-      }
-
-      return tour;
-    }
-
-    // Apply zigzag optimization on a tour (given as array of point IDs)
-    function applyZigzagOnTour(tourIndices, points, graph) {
-      // Convert tour indices to points in tour order
-      const tourPoints = tourIndices.map(idx => ({ ...points[idx], originalId: idx }));
-
-      const zigzag = (i, pts) => {
-        const p1 = pts[(i - 1 + pts.length) % pts.length];
-        const p2 = pts[i % pts.length];
-        const p3 = pts[(i + 1) % pts.length];
-        const p4 = pts[(i + 2) % pts.length];
-        const segment1 = distance(p1, p2);
-        const segment3 = distance(p3, p4);
-        const zigZagSegment1 = distance(p1, p3);
-        const zigZagSegment3 = distance(p2, p4);
-        return (zigZagSegment1 + zigZagSegment3) < (segment1 + segment3);
-      };
-
-      const newTour = [];
-      let i = 1;
-      while (i < tourPoints.length) {
-        if (tourPoints.length - i > 2 && zigzag(i, tourPoints)) {
-          newTour.push(tourPoints[i - 1].originalId);
-          newTour.push(tourPoints[(i + 1) % tourPoints.length].originalId);
-          newTour.push(tourPoints[i % tourPoints.length].originalId);
-          newTour.push(tourPoints[(i + 2) % tourPoints.length].originalId);
-          i += 3;
-        } else {
-          newTour.push(tourPoints[i - 1].originalId);
-          newTour.push(tourPoints[i % tourPoints.length].originalId);
-          i++;
-        }
-      }
-
-      // Remove duplicates while preserving order
-      return [...new Set(newTour)];
-    }
-
-    // ========================================
-    // Sonar Visit based methods (1-5)
-    // ========================================
-
-    // Generate Sonar Visit tour (O(1) angle steps)
-    function generateSonarVisitTour(points) {
-      // Calculate angle step based on grid size
-      const angleSteps = 4 * GRID_SIZE;
-      const angleStep = (2 * Math.PI) / angleSteps;
-
-      // Group points by their angle bucket
-      const angleBuckets = new Map();
-
-      points.forEach(point => {
-        let angle = point.angle;
-        if (angle < 0) angle += 2 * Math.PI;
-
-        const bucketIndex = Math.floor(angle / angleStep);
-        if (!angleBuckets.has(bucketIndex)) {
-          angleBuckets.set(bucketIndex, []);
-        }
-        angleBuckets.get(bucketIndex).push(point);
-      });
-
-      // Sort points within each bucket by distance from center
-      const center = { x: 0.5, y: 0.5 };
-      angleBuckets.forEach((bucketPoints, key) => {
-        bucketPoints.sort((a, b) => {
-          const distA = Math.hypot(a.x - center.x, a.y - center.y);
-          const distB = Math.hypot(b.x - center.x, b.y - center.y);
-          return distA - distB;
-        });
-      });
-
-      // Build tour by sweeping through angle buckets in order
-      const tour = [];
-      for (let i = 0; i < angleSteps; i++) {
-        if (angleBuckets.has(i)) {
-          const bucketPoints = angleBuckets.get(i);
-          bucketPoints.forEach(p => tour.push(p.id));
-        }
-      }
-
-      return tour;
-    }
-
-    // Method 1: Sonar Visit (base)
-    async function runSonarVisit(container, points, graph, lowerBound, upperBound) {
+    // Algorithm runner functions using loaded modules
+    async function runSonarVisit(container, points, graph, optimalLength) {
       const startTime = performance.now();
-      const tour = generateSonarVisitTour(points);
+      const tour = SonarVisit.generateTour(points, GRID_SIZE);
       const pathLength = calculateTourLength(tour, graph);
       visualizeTour(container, points, tour, "#17a2b8");
       const endTime = performance.now();
-      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
-
       return {
         pathLength,
-        efficiency,
+        efficiency: calculateEfficiency(pathLength, optimalLength),
         runtime: endTime - startTime,
         complexity: "O(1)*",
         bestFor: "Constant-time approximation"
       };
     }
 
-    // Method 2: Sonar Visit → Zigzag
-    async function runSonarVisitZigzag(container, points, graph, lowerBound, upperBound) {
+    async function runSonarVisitZigzag(container, points, graph, optimalLength) {
       const startTime = performance.now();
-      let tour = generateSonarVisitTour(points);
-      tour = applyZigzagOnTour(tour, points, graph);
+      let tour = SonarVisit.generateTour(points, GRID_SIZE);
+      tour = Zigzag.optimize(tour, points, graph);
       const pathLength = calculateTourLength(tour, graph);
       visualizeTour(container, points, tour, "#20c997");
       const endTime = performance.now();
-      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
-
       return {
         pathLength,
-        efficiency,
+        efficiency: calculateEfficiency(pathLength, optimalLength),
         runtime: endTime - startTime,
         complexity: "O(n)",
         bestFor: "Fast local optimization"
       };
     }
 
-    // Method 3: Sonar Visit → 2-Opt
-    async function runSonarVisit2Opt(container, points, graph, lowerBound, upperBound) {
+    async function runSonarVisit2Opt(container, points, graph, optimalLength) {
       const startTime = performance.now();
-      let tour = generateSonarVisitTour(points);
-      tour = twoOptImprove(tour, graph);
+      let tour = SonarVisit.generateTour(points, GRID_SIZE);
+      tour = TwoOpt.improve(tour, graph);
       const pathLength = calculateTourLength(tour, graph);
       visualizeTour(container, points, tour, "#007bff");
       const endTime = performance.now();
-      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
-
       return {
         pathLength,
-        efficiency,
+        efficiency: calculateEfficiency(pathLength, optimalLength),
         runtime: endTime - startTime,
-        complexity: "O(n²)",
+        complexity: "O(n^2)",
         bestFor: "High-quality from O(1) base"
       };
     }
 
-    // Method 4: Sonar Visit → Zigzag → 2-Opt
-    async function runSonarVisitZigzag2Opt(container, points, graph, lowerBound, upperBound) {
+    async function runSonarVisitZigzag2Opt(container, points, graph, optimalLength) {
       const startTime = performance.now();
-      let tour = generateSonarVisitTour(points);
-      tour = applyZigzagOnTour(tour, points, graph);
-      tour = twoOptImprove(tour, graph);
+      let tour = SonarVisit.generateTour(points, GRID_SIZE);
+      tour = Zigzag.optimize(tour, points, graph);
+      tour = TwoOpt.improve(tour, graph);
       const pathLength = calculateTourLength(tour, graph);
       visualizeTour(container, points, tour, "#6f42c1");
       const endTime = performance.now();
-      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
-
       return {
         pathLength,
-        efficiency,
+        efficiency: calculateEfficiency(pathLength, optimalLength),
         runtime: endTime - startTime,
-        complexity: "O(n²)",
+        complexity: "O(n^2)",
         bestFor: "Local then global optimization"
       };
     }
 
-    // Method 5: Sonar Visit → 2-Opt → Zigzag
-    async function runSonarVisit2OptZigzag(container, points, graph, lowerBound, upperBound) {
+    async function runSonarVisit2OptZigzag(container, points, graph, optimalLength) {
       const startTime = performance.now();
-      let tour = generateSonarVisitTour(points);
-      tour = twoOptImprove(tour, graph);
-      tour = applyZigzagOnTour(tour, points, graph);
+      let tour = SonarVisit.generateTour(points, GRID_SIZE);
+      tour = TwoOpt.improve(tour, graph);
+      tour = Zigzag.optimize(tour, points, graph);
       const pathLength = calculateTourLength(tour, graph);
       visualizeTour(container, points, tour, "#e83e8c");
       const endTime = performance.now();
-      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
-
       return {
         pathLength,
-        efficiency,
+        efficiency: calculateEfficiency(pathLength, optimalLength),
         runtime: endTime - startTime,
-        complexity: "O(n²)",
+        complexity: "O(n^2)",
         bestFor: "Global then local optimization"
       };
     }
 
-    // ========================================
-    // Angular Sort based methods (6-10)
-    // ========================================
-
-    // Generate Angular Sort tour
-    function generateAngularSortTour(points) {
-      const sortedPoints = [...points].sort((a, b) => a.angle - b.angle);
-      return sortedPoints.map(p => p.id);
-    }
-
-    // Method 6: Angular Sort (base)
-    async function runAngularSort(container, points, graph, lowerBound, upperBound) {
+    async function runAngularSort(container, points, graph, optimalLength) {
       const startTime = performance.now();
-      const tour = generateAngularSortTour(points);
+      const tour = AngularSort.generateTour(points);
       const pathLength = calculateTourLength(tour, graph);
       visualizeTour(container, points, tour, "#fd7e14");
       const endTime = performance.now();
-      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
-
       return {
         pathLength,
-        efficiency,
+        efficiency: calculateEfficiency(pathLength, optimalLength),
         runtime: endTime - startTime,
         complexity: "O(n log n)",
         bestFor: "Quick approximate solutions"
       };
     }
 
-    // Method 7: Angular Sort → Zigzag
-    async function runAngularSortZigzag(container, points, graph, lowerBound, upperBound) {
+    async function runAngularSortZigzag(container, points, graph, optimalLength) {
       const startTime = performance.now();
-      let tour = generateAngularSortTour(points);
-      tour = applyZigzagOnTour(tour, points, graph);
+      let tour = AngularSort.generateTour(points);
+      tour = Zigzag.optimize(tour, points, graph);
       const pathLength = calculateTourLength(tour, graph);
       visualizeTour(container, points, tour, "#28a745");
       const endTime = performance.now();
-      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
-
       return {
         pathLength,
-        efficiency,
+        efficiency: calculateEfficiency(pathLength, optimalLength),
         runtime: endTime - startTime,
         complexity: "O(n log n)",
         bestFor: "Local optimization"
       };
     }
 
-    // Method 8: Angular Sort → 2-Opt
-    async function runAngularSort2Opt(container, points, graph, lowerBound, upperBound) {
+    async function runAngularSort2Opt(container, points, graph, optimalLength) {
       const startTime = performance.now();
-      let tour = generateAngularSortTour(points);
-      tour = twoOptImprove(tour, graph);
+      let tour = AngularSort.generateTour(points);
+      tour = TwoOpt.improve(tour, graph);
       const pathLength = calculateTourLength(tour, graph);
       visualizeTour(container, points, tour, "#dc3545");
       const endTime = performance.now();
-      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
-
       return {
         pathLength,
-        efficiency,
+        efficiency: calculateEfficiency(pathLength, optimalLength),
         runtime: endTime - startTime,
-        complexity: "O(n²)",
+        complexity: "O(n^2)",
         bestFor: "High-quality solutions"
       };
     }
 
-    // Method 9: Angular Sort → Zigzag → 2-Opt
-    async function runAngularSortZigzag2Opt(container, points, graph, lowerBound, upperBound) {
+    async function runAngularSortZigzag2Opt(container, points, graph, optimalLength) {
       const startTime = performance.now();
-      let tour = generateAngularSortTour(points);
-      tour = applyZigzagOnTour(tour, points, graph);
-      tour = twoOptImprove(tour, graph);
+      let tour = AngularSort.generateTour(points);
+      tour = Zigzag.optimize(tour, points, graph);
+      tour = TwoOpt.improve(tour, graph);
       const pathLength = calculateTourLength(tour, graph);
       visualizeTour(container, points, tour, "#6610f2");
       const endTime = performance.now();
-      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
-
       return {
         pathLength,
-        efficiency,
+        efficiency: calculateEfficiency(pathLength, optimalLength),
         runtime: endTime - startTime,
-        complexity: "O(n²)",
+        complexity: "O(n^2)",
         bestFor: "Local then global optimization"
       };
     }
 
-    // Method 10: Angular Sort → 2-Opt → Zigzag
-    async function runAngularSort2OptZigzag(container, points, graph, lowerBound, upperBound) {
+    async function runAngularSort2OptZigzag(container, points, graph, optimalLength) {
       const startTime = performance.now();
-      let tour = generateAngularSortTour(points);
-      tour = twoOptImprove(tour, graph);
-      tour = applyZigzagOnTour(tour, points, graph);
+      let tour = AngularSort.generateTour(points);
+      tour = TwoOpt.improve(tour, graph);
+      tour = Zigzag.optimize(tour, points, graph);
       const pathLength = calculateTourLength(tour, graph);
       visualizeTour(container, points, tour, "#795548");
       const endTime = performance.now();
-      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
-
       return {
         pathLength,
-        efficiency,
+        efficiency: calculateEfficiency(pathLength, optimalLength),
         runtime: endTime - startTime,
-        complexity: "O(n²)",
+        complexity: "O(n^2)",
         bestFor: "Global then local optimization"
       };
     }
 
-    // ========================================
-    // Classic TSP Algorithms (11-15)
-    // ========================================
-
-    // Generate Nearest Neighbor tour
-    function generateNearestNeighborTour(points, graph) {
-      const n = points.length;
-      const visited = new Array(n).fill(false);
-      const tour = [];
-
-      // Start from point 0
-      let current = 0;
-      tour.push(current);
-      visited[current] = true;
-
-      while (tour.length < n) {
-        let nearest = -1;
-        let nearestDist = Infinity;
-
-        for (let i = 0; i < n; i++) {
-          if (!visited[i] && graph[current][i] < nearestDist) {
-            nearest = i;
-            nearestDist = graph[current][i];
-          }
-        }
-
-        if (nearest !== -1) {
-          tour.push(nearest);
-          visited[nearest] = true;
-          current = nearest;
-        }
-      }
-
-      return tour;
-    }
-
-    // Method 11: Nearest Neighbor
-    async function runNearestNeighbor(container, points, graph, lowerBound, upperBound, optimalLength) {
+    async function runNearestNeighbor(container, points, graph, optimalLength) {
       const startTime = performance.now();
-      const tour = generateNearestNeighborTour(points, graph);
+      const tour = NearestNeighbor.generateTour(points, graph);
       const pathLength = calculateTourLength(tour, graph);
       visualizeTour(container, points, tour, "#ff6b6b");
       const endTime = performance.now();
-      const efficiency = optimalLength > 0
-        ? (optimalLength / pathLength) * 100
-        : calculateEfficiency(pathLength, lowerBound, upperBound);
-
       return {
         pathLength,
-        efficiency,
+        efficiency: calculateEfficiency(pathLength, optimalLength),
         runtime: endTime - startTime,
-        complexity: "O(n²)",
+        complexity: "O(n^2)",
         bestFor: "Fast approximate solution"
       };
     }
 
-    // Generate Greedy (Nearest Edge) tour
-    function generateGreedyEdgeTour(points, graph) {
-      const n = points.length;
-      // Create list of all edges
-      const edges = [];
-      for (let i = 0; i < n; i++) {
-        for (let j = i + 1; j < n; j++) {
-          edges.push({ from: i, to: j, dist: graph[i][j] });
-        }
-      }
-
-      // Sort edges by distance
-      edges.sort((a, b) => a.dist - b.dist);
-
-      // Track degree of each node
-      const degree = new Array(n).fill(0);
-      // Track connected components using union-find
-      const parent = Array.from({ length: n }, (_, i) => i);
-
-      function find(x) {
-        if (parent[x] !== x) parent[x] = find(parent[x]);
-        return parent[x];
-      }
-
-      function union(x, y) {
-        parent[find(x)] = find(y);
-      }
-
-      // Track adjacency for tour reconstruction
-      const adj = Array.from({ length: n }, () => []);
-      let edgeCount = 0;
-
-      for (const edge of edges) {
-        if (edgeCount >= n) break;
-
-        const { from, to } = edge;
-
-        // Check if adding this edge would violate constraints
-        if (degree[from] >= 2 || degree[to] >= 2) continue;
-
-        // Check if it would create a premature cycle
-        if (edgeCount < n - 1 && find(from) === find(to)) continue;
-
-        // Add edge
-        adj[from].push(to);
-        adj[to].push(from);
-        degree[from]++;
-        degree[to]++;
-        union(from, to);
-        edgeCount++;
-      }
-
-      // Reconstruct tour from adjacency list
-      const tour = [];
-      const visited = new Array(n).fill(false);
-      let current = 0;
-
-      while (tour.length < n) {
-        tour.push(current);
-        visited[current] = true;
-
-        let next = -1;
-        for (const neighbor of adj[current]) {
-          if (!visited[neighbor]) {
-            next = neighbor;
-            break;
-          }
-        }
-
-        if (next === -1) break;
-        current = next;
-      }
-
-      return tour;
-    }
-
-    // Method 12: Greedy (Nearest Edge)
-    async function runGreedyEdge(container, points, graph, lowerBound, upperBound, optimalLength) {
+    async function runGreedyEdge(container, points, graph, optimalLength) {
       const startTime = performance.now();
-      const tour = generateGreedyEdgeTour(points, graph);
+      const tour = GreedyEdge.generateTour(points, graph);
       const pathLength = calculateTourLength(tour, graph);
       visualizeTour(container, points, tour, "#4ecdc4");
       const endTime = performance.now();
-      const efficiency = optimalLength > 0
-        ? (optimalLength / pathLength) * 100
-        : calculateEfficiency(pathLength, lowerBound, upperBound);
-
       return {
         pathLength,
-        efficiency,
+        efficiency: calculateEfficiency(pathLength, optimalLength),
         runtime: endTime - startTime,
-        complexity: "O(n² log n)",
+        complexity: "O(n^2 log n)",
         bestFor: "Good average performance"
       };
     }
 
-    // Simulated Annealing
-    function simulatedAnnealing(graph, initialTour, maxIterations = 5000) {
-      let currentTour = [...initialTour];
-      let currentLength = calculateTourLength(currentTour, graph);
-      let bestTour = [...currentTour];
-      let bestLength = currentLength;
-
-      let temperature = 1.0;
-      const coolingRate = 0.9995;
-      const n = currentTour.length;
-
-      for (let iter = 0; iter < maxIterations; iter++) {
-        // Generate neighbor by 2-opt swap
-        const i = Math.floor(Math.random() * (n - 1));
-        let j = Math.floor(Math.random() * (n - 1));
-        if (j >= i) j++;
-
-        const [minIdx, maxIdx] = i < j ? [i, j] : [j, i];
-
-        // Calculate delta
-        const prev = (minIdx - 1 + n) % n;
-        const nextMax = (maxIdx + 1) % n;
-
-        const oldDist = graph[currentTour[prev]][currentTour[minIdx]] +
-                        graph[currentTour[maxIdx]][currentTour[nextMax]];
-        const newDist = graph[currentTour[prev]][currentTour[maxIdx]] +
-                        graph[currentTour[minIdx]][currentTour[nextMax]];
-
-        const delta = newDist - oldDist;
-
-        // Accept or reject
-        if (delta < 0 || Math.random() < Math.exp(-delta / temperature)) {
-          // Reverse segment
-          const newTour = [...currentTour];
-          let left = minIdx;
-          let right = maxIdx;
-          while (left < right) {
-            [newTour[left], newTour[right]] = [newTour[right], newTour[left]];
-            left++;
-            right--;
-          }
-          currentTour = newTour;
-          currentLength = calculateTourLength(currentTour, graph);
-
-          if (currentLength < bestLength) {
-            bestTour = [...currentTour];
-            bestLength = currentLength;
-          }
-        }
-
-        temperature *= coolingRate;
-      }
-
-      return bestTour;
-    }
-
-    // Method 13: Simulated Annealing
-    async function runSimulatedAnnealing(container, points, graph, lowerBound, upperBound, optimalLength) {
+    async function runSimulatedAnnealing(container, points, graph, optimalLength) {
       const startTime = performance.now();
-      // Start with nearest neighbor tour
-      const initialTour = generateNearestNeighborTour(points, graph);
-      const tour = simulatedAnnealing(graph, initialTour);
+      const initialTour = NearestNeighbor.generateTour(points, graph);
+      const tour = SimulatedAnnealing.optimize(graph, initialTour);
       const pathLength = calculateTourLength(tour, graph);
       visualizeTour(container, points, tour, "#9b59b6");
       const endTime = performance.now();
-      const efficiency = optimalLength > 0
-        ? (optimalLength / pathLength) * 100
-        : calculateEfficiency(pathLength, lowerBound, upperBound);
-
       return {
         pathLength,
-        efficiency,
+        efficiency: calculateEfficiency(pathLength, optimalLength),
         runtime: endTime - startTime,
-        complexity: "O(n × iter)",
+        complexity: "O(n * iter)",
         bestFor: "Near-optimal solutions"
       };
     }
 
-    // Genetic Algorithm
-    function geneticAlgorithm(graph, n, populationSize = 50, generations = 100) {
-      // Create initial population
-      function randomTour() {
-        const tour = Array.from({ length: n }, (_, i) => i);
-        for (let i = n - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [tour[i], tour[j]] = [tour[j], tour[i]];
-        }
-        return tour;
-      }
-
-      function fitness(tour) {
-        return 1 / calculateTourLength(tour, graph);
-      }
-
-      // Order crossover (OX)
-      function crossover(parent1, parent2) {
-        const start = Math.floor(Math.random() * n);
-        const end = start + Math.floor(Math.random() * (n - start));
-
-        const child = new Array(n).fill(-1);
-        const used = new Set();
-
-        // Copy segment from parent1
-        for (let i = start; i <= end; i++) {
-          child[i] = parent1[i];
-          used.add(parent1[i]);
-        }
-
-        // Fill rest from parent2
-        let idx = (end + 1) % n;
-        for (let i = 0; i < n; i++) {
-          const city = parent2[(end + 1 + i) % n];
-          if (!used.has(city)) {
-            child[idx] = city;
-            idx = (idx + 1) % n;
-          }
-        }
-
-        return child;
-      }
-
-      // Mutation by swap
-      function mutate(tour) {
-        const newTour = [...tour];
-        const i = Math.floor(Math.random() * n);
-        const j = Math.floor(Math.random() * n);
-        [newTour[i], newTour[j]] = [newTour[j], newTour[i]];
-        return newTour;
-      }
-
-      // Initialize population
-      let population = [];
-      for (let i = 0; i < populationSize; i++) {
-        population.push(randomTour());
-      }
-
-      for (let gen = 0; gen < generations; gen++) {
-        // Calculate fitness
-        const fitnesses = population.map(fitness);
-        const totalFitness = fitnesses.reduce((a, b) => a + b, 0);
-
-        // Selection (roulette wheel)
-        function select() {
-          let r = Math.random() * totalFitness;
-          for (let i = 0; i < populationSize; i++) {
-            r -= fitnesses[i];
-            if (r <= 0) return population[i];
-          }
-          return population[populationSize - 1];
-        }
-
-        // Create new population
-        const newPopulation = [];
-
-        // Elitism: keep best
-        let bestIdx = 0;
-        for (let i = 1; i < populationSize; i++) {
-          if (fitnesses[i] > fitnesses[bestIdx]) bestIdx = i;
-        }
-        newPopulation.push(population[bestIdx]);
-
-        while (newPopulation.length < populationSize) {
-          const parent1 = select();
-          const parent2 = select();
-          let child = crossover(parent1, parent2);
-
-          // Mutation with 10% probability
-          if (Math.random() < 0.1) {
-            child = mutate(child);
-          }
-
-          newPopulation.push(child);
-        }
-
-        population = newPopulation;
-      }
-
-      // Return best tour
-      let bestTour = population[0];
-      let bestLength = calculateTourLength(bestTour, graph);
-
-      for (const tour of population) {
-        const length = calculateTourLength(tour, graph);
-        if (length < bestLength) {
-          bestTour = tour;
-          bestLength = length;
-        }
-      }
-
-      return bestTour;
-    }
-
-    // Method 14: Genetic Algorithm
-    async function runGeneticAlgorithm(container, points, graph, lowerBound, upperBound, optimalLength) {
+    async function runGeneticAlgorithm(container, points, graph, optimalLength) {
       const startTime = performance.now();
-      const tour = geneticAlgorithm(graph, points.length);
+      const tour = GeneticAlgorithm.optimize(graph, points.length);
       const pathLength = calculateTourLength(tour, graph);
       visualizeTour(container, points, tour, "#e67e22");
       const endTime = performance.now();
-      const efficiency = optimalLength > 0
-        ? (optimalLength / pathLength) * 100
-        : calculateEfficiency(pathLength, lowerBound, upperBound);
-
       return {
         pathLength,
-        efficiency,
+        efficiency: calculateEfficiency(pathLength, optimalLength),
         runtime: endTime - startTime,
-        complexity: "O(pop × gen × n)",
+        complexity: "O(pop * gen * n)",
         bestFor: "Large-scale optimization"
       };
     }
 
-    // Brute Force (for small n only)
-    function bruteForceTSP(graph, n) {
-      if (n > 10) {
-        // For larger n, use held-karp or return approximation
-        // We'll use a branch and bound approximation
-        return heldKarpDP(graph, n);
-      }
-
-      const cities = Array.from({ length: n }, (_, i) => i);
-      let bestTour = [...cities];
-      let bestLength = calculateTourLength(bestTour, graph);
-
-      // Generate all permutations starting from city 0
-      function permute(arr, start) {
-        if (start === arr.length - 1) {
-          const length = calculateTourLength(arr, graph);
-          if (length < bestLength) {
-            bestLength = length;
-            bestTour = [...arr];
-          }
-          return;
-        }
-
-        for (let i = start; i < arr.length; i++) {
-          [arr[start], arr[i]] = [arr[i], arr[start]];
-          permute(arr, start + 1);
-          [arr[start], arr[i]] = [arr[i], arr[start]];
-        }
-      }
-
-      // Fix first city to reduce permutations
-      permute(cities, 1);
-
-      return { tour: bestTour, length: bestLength };
-    }
-
-    // Held-Karp dynamic programming for exact solution (up to ~20 cities)
-    function heldKarpDP(graph, n) {
-      if (n > 20) {
-        // Fall back to nearest neighbor + 2-opt for very large n
-        const nn = generateNearestNeighborTour({ length: n }, graph);
-        const improved = twoOptImprove(nn, graph);
-        return { tour: improved, length: calculateTourLength(improved, graph) };
-      }
-
-      const dp = new Map();
-      const parent = new Map();
-
-      // Base case: starting from city 0
-      for (let i = 1; i < n; i++) {
-        const mask = 1 << i;
-        dp.set(`${mask},${i}`, graph[0][i]);
-        parent.set(`${mask},${i}`, 0);
-      }
-
-      // Fill DP table
-      for (let size = 2; size < n; size++) {
-        // Generate all subsets of size `size` from cities 1 to n-1
-        const subsets = [];
-        function generateSubsets(start, current, count) {
-          if (count === size) {
-            subsets.push(current);
-            return;
-          }
-          for (let i = start; i < n; i++) {
-            generateSubsets(i + 1, current | (1 << i), count + 1);
-          }
-        }
-        generateSubsets(1, 0, 0);
-
-        for (const mask of subsets) {
-          for (let last = 1; last < n; last++) {
-            if (!(mask & (1 << last))) continue;
-
-            const prevMask = mask ^ (1 << last);
-            if (prevMask === 0) continue;
-
-            let bestDist = Infinity;
-            let bestPrev = -1;
-
-            for (let prev = 1; prev < n; prev++) {
-              if (!(prevMask & (1 << prev))) continue;
-
-              const key = `${prevMask},${prev}`;
-              if (!dp.has(key)) continue;
-
-              const dist = dp.get(key) + graph[prev][last];
-              if (dist < bestDist) {
-                bestDist = dist;
-                bestPrev = prev;
-              }
-            }
-
-            if (bestDist < Infinity) {
-              dp.set(`${mask},${last}`, bestDist);
-              parent.set(`${mask},${last}`, bestPrev);
-            }
-          }
-        }
-      }
-
-      // Find minimum tour
-      const fullMask = ((1 << n) - 1) ^ 1; // All cities except 0
-      let minLength = Infinity;
-      let lastCity = -1;
-
-      for (let i = 1; i < n; i++) {
-        const key = `${fullMask},${i}`;
-        if (dp.has(key)) {
-          const dist = dp.get(key) + graph[i][0];
-          if (dist < minLength) {
-            minLength = dist;
-            lastCity = i;
-          }
-        }
-      }
-
-      // Reconstruct tour
-      const tour = [0];
-      let currentMask = fullMask;
-      let current = lastCity;
-
-      while (current !== 0) {
-        tour.push(current);
-        const key = `${currentMask},${current}`;
-        const prev = parent.get(key);
-        currentMask ^= (1 << current);
-        current = prev;
-      }
-
-      return { tour, length: minLength };
-    }
-
-    // Method 15: Brute Force (Optimal Reference)
-    async function runBruteForce(container, points, graph, lowerBound, upperBound) {
+    async function runBruteForce(container, points, graph) {
       const startTime = performance.now();
-      const result = bruteForceTSP(graph, points.length);
+      const result = BruteForce.findOptimal(graph, points.length);
       const tour = result.tour;
       const pathLength = result.length;
       visualizeTour(container, points, tour, "#2c3e50");
       const endTime = performance.now();
-
-      // Brute force gives optimal, so efficiency is 100%
       return {
         pathLength,
-        efficiency: 100.0,
+        efficiency: 100.0, // By definition, brute force is optimal
         runtime: endTime - startTime,
-        complexity: points.length <= 10 ? "O(n!)" : "O(2ⁿ × n²)",
+        complexity: points.length <= 10 ? "O(n!)" : "O(2^n * n^2)",
         bestFor: "Optimal reference (small n)"
       };
     }
@@ -1446,7 +803,6 @@
       const results = [];
       const numMethods = 15;
 
-      // Generate containers for all methods
       const containers = [];
       for (let i = 1; i <= numMethods; i++) {
         containers.push(document.getElementById(`canvas${i}`));
@@ -1454,36 +810,25 @@
 
       // Generate normalized points once (same for all canvases)
       const normalizedPoints = generateNormalizedPoints(NUM_POINTS);
-
-      // Scale points to percentage values
       const points = scalePointsToPercent(normalizedPoints);
       const graph = createDistanceMatrix(points);
-      const lowerBound = calculateMST(graph);
-      const upperBound = calculateUpperBound(graph);
 
       containers.forEach(container => {
         displayPoints(container, points);
         container.points = points;
         container.graph = graph;
-        container.lowerBound = lowerBound;
-        container.upperBound = upperBound;
       });
 
-      // First, run brute force to get optimal solution for efficiency calculation
+      // First, run brute force to get optimal solution
       document.getElementById('stats15').innerHTML = 'Computing optimal solution...';
       document.getElementById('progress15').style.width = '50%';
       await new Promise(resolve => setTimeout(resolve, 10));
 
-      const bruteForceResult = await runBruteForce(
-        containers[14],
-        points,
-        graph,
-        lowerBound,
-        upperBound
-      );
+      const bruteForceResult = await runBruteForce(containers[14], points, graph);
       bruteForceResult.name = "Brute Force (Optimal)";
 
       const optimalLength = bruteForceResult.pathLength;
+      console.log(`Optimal tour length: ${optimalLength.toFixed(4)}`);
 
       document.getElementById('progress15').style.width = '100%';
       document.getElementById('stats15').innerHTML = `
@@ -1492,25 +837,22 @@
         <div>Runtime: ${bruteForceResult.runtime.toFixed(1)}ms</div>
       `;
 
-      // Define all methods in order (excluding brute force which we already ran)
+      // Define all methods
       const methods = [
-        // Sonar Visit based (1-5)
-        { name: "Sonar Visit", fn: runSonarVisit, id: 1, usesOptimal: false },
-        { name: "Sonar Visit → Zigzag", fn: runSonarVisitZigzag, id: 2, usesOptimal: false },
-        { name: "Sonar Visit → 2-Opt", fn: runSonarVisit2Opt, id: 3, usesOptimal: false },
-        { name: "Sonar Visit → Zigzag → 2-Opt", fn: runSonarVisitZigzag2Opt, id: 4, usesOptimal: false },
-        { name: "Sonar Visit → 2-Opt → Zigzag", fn: runSonarVisit2OptZigzag, id: 5, usesOptimal: false },
-        // Angular Sort based (6-10)
-        { name: "Angular Sort", fn: runAngularSort, id: 6, usesOptimal: false },
-        { name: "Angular Sort → Zigzag", fn: runAngularSortZigzag, id: 7, usesOptimal: false },
-        { name: "Angular Sort → 2-Opt", fn: runAngularSort2Opt, id: 8, usesOptimal: false },
-        { name: "Angular Sort → Zigzag → 2-Opt", fn: runAngularSortZigzag2Opt, id: 9, usesOptimal: false },
-        { name: "Angular Sort → 2-Opt → Zigzag", fn: runAngularSort2OptZigzag, id: 10, usesOptimal: false },
-        // Classic TSP Algorithms (11-14)
-        { name: "Nearest Neighbor", fn: runNearestNeighbor, id: 11, usesOptimal: true },
-        { name: "Greedy (Nearest Edge)", fn: runGreedyEdge, id: 12, usesOptimal: true },
-        { name: "Simulated Annealing", fn: runSimulatedAnnealing, id: 13, usesOptimal: true },
-        { name: "Genetic Algorithm", fn: runGeneticAlgorithm, id: 14, usesOptimal: true }
+        { name: "Sonar Visit", fn: runSonarVisit, id: 1 },
+        { name: "Sonar Visit + Zigzag", fn: runSonarVisitZigzag, id: 2 },
+        { name: "Sonar Visit + 2-Opt", fn: runSonarVisit2Opt, id: 3 },
+        { name: "Sonar Visit + Zigzag + 2-Opt", fn: runSonarVisitZigzag2Opt, id: 4 },
+        { name: "Sonar Visit + 2-Opt + Zigzag", fn: runSonarVisit2OptZigzag, id: 5 },
+        { name: "Angular Sort", fn: runAngularSort, id: 6 },
+        { name: "Angular Sort + Zigzag", fn: runAngularSortZigzag, id: 7 },
+        { name: "Angular Sort + 2-Opt", fn: runAngularSort2Opt, id: 8 },
+        { name: "Angular Sort + Zigzag + 2-Opt", fn: runAngularSortZigzag2Opt, id: 9 },
+        { name: "Angular Sort + 2-Opt + Zigzag", fn: runAngularSort2OptZigzag, id: 10 },
+        { name: "Nearest Neighbor", fn: runNearestNeighbor, id: 11 },
+        { name: "Greedy (Nearest Edge)", fn: runGreedyEdge, id: 12 },
+        { name: "Simulated Annealing", fn: runSimulatedAnnealing, id: 13 },
+        { name: "Genetic Algorithm", fn: runGeneticAlgorithm, id: 14 }
       ];
 
       // Execute methods sequentially
@@ -1519,16 +861,9 @@
         const container = containers[method.id - 1];
 
         document.getElementById(`progress${method.id}`).style.width = '50%';
-
-        // Small delay between methods to visualize sequential execution
         await new Promise(resolve => setTimeout(resolve, 50));
 
-        const result = method.usesOptimal
-          ? await method.fn(container, container.points, container.graph, container.lowerBound, container.upperBound, optimalLength)
-          : await method.fn(container, container.points, container.graph, container.lowerBound, container.upperBound);
-
-        // Recalculate efficiency using optimal length for all methods
-        result.efficiency = (optimalLength / result.pathLength) * 100;
+        const result = await method.fn(container, container.points, container.graph, optimalLength);
         result.name = method.name;
         results.push(result);
 
@@ -1580,28 +915,20 @@
     // Re-render canvases on resize
     const handleResize = debounce(() => {
       const numMethods = 15;
-      const containers = [];
       for (let i = 1; i <= numMethods; i++) {
         const container = document.getElementById(`canvas${i}`);
         container.innerHTML = '';
-        containers.push(container);
-      }
-
-      // Reset progress bars and stats
-      for (let i = 1; i <= numMethods; i++) {
         document.getElementById(`progress${i}`).style.width = '0%';
         document.getElementById(`stats${i}`).innerHTML = 'Resizing...';
       }
-
       runComparison();
     }, 250);
 
-    // Listen for resize events
     window.addEventListener('resize', handleResize);
 
     // Set grid info text
     document.getElementById('grid-info').textContent =
-      `Points are placed on a virtual ${GRID_SIZE}×${GRID_SIZE} grid for consistent calculations.`;
+      `${NUM_POINTS} points placed on a virtual ${GRID_SIZE}x${GRID_SIZE} grid. True optimal found via brute force.`;
 
     // Start comparison
     runComparison();
