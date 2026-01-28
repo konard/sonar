@@ -20,7 +20,7 @@
 
     .methods-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 20px;
       margin-bottom: 30px;
     }
@@ -41,12 +41,21 @@
 
     .canvas-container {
       position: relative;
-      width: 300px;
-      height: 300px;
+      width: 100%;
+      padding-bottom: 100%; /* Maintain aspect ratio 1:1 */
       background: white;
       border: 1px solid #ccc;
       border-radius: 50%;
       margin: 0 auto 15px;
+      box-sizing: border-box;
+    }
+
+    .canvas-inner {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
     }
 
     .point {
@@ -130,7 +139,7 @@
         Simple approach: sorts points by angle from center and connects them sequentially.
         Fast but often suboptimal.
       </div>
-      <div class="canvas-container" id="canvas1"></div>
+      <div class="canvas-container"><div class="canvas-inner" id="canvas1"></div></div>
       <div class="progress"><div class="progress-bar" id="progress1"></div></div>
       <div class="stats" id="stats1">Initializing...</div>
     </div>
@@ -141,7 +150,7 @@
         Looks ahead to optimize local connections by checking if zigzag patterns
         (skipping intermediate points) reduce total path length.
       </div>
-      <div class="canvas-container" id="canvas2"></div>
+      <div class="canvas-container"><div class="canvas-inner" id="canvas2"></div></div>
       <div class="progress"><div class="progress-bar" id="progress2"></div></div>
       <div class="stats" id="stats2">Initializing...</div>
     </div>
@@ -152,7 +161,7 @@
         Classic TSP improvement heuristic. Starts with nearest neighbor tour,
         then iteratively improves by swapping edge pairs.
       </div>
-      <div class="canvas-container" id="canvas3"></div>
+      <div class="canvas-container"><div class="canvas-inner" id="canvas3"></div></div>
       <div class="progress"><div class="progress-bar" id="progress3"></div></div>
       <div class="stats" id="stats3">Initializing...</div>
     </div>
@@ -163,7 +172,7 @@
         Applies 2-opt optimization first, then refines with zigzag.
         Combines global edge swapping with local path improvements.
       </div>
-      <div class="canvas-container" id="canvas4"></div>
+      <div class="canvas-container"><div class="canvas-inner" id="canvas4"></div></div>
       <div class="progress"><div class="progress-bar" id="progress4"></div></div>
       <div class="stats" id="stats4">Initializing...</div>
     </div>
@@ -174,7 +183,7 @@
         Applies zigzag optimization first, then refines with 2-opt.
         Local improvements followed by global edge swapping.
       </div>
-      <div class="canvas-container" id="canvas5"></div>
+      <div class="canvas-container"><div class="canvas-inner" id="canvas5"></div></div>
       <div class="progress"><div class="progress-bar" id="progress5"></div></div>
       <div class="stats" id="stats5">Initializing...</div>
     </div>
@@ -206,12 +215,12 @@
     }
 
     const NUM_POINTS = 50; // Fixed for fair comparison
-    const RADIUS = 250;
 
     // Generate same points for all methods with random seed for variety on each reload
     const initialSeed = Math.floor(Math.random() * 1000000);
 
-    const generateRandomPoints = (numPoints, radius, centerX, centerY, seed = initialSeed) => {
+    // Generate points with normalized coordinates (0-1 range) for responsive scaling
+    const generateNormalizedPoints = (numPoints, seed = initialSeed) => {
       // Simple LCG for reproducible results within same page load
       let currentSeed = seed;
       const rng = () => {
@@ -219,17 +228,32 @@
         return currentSeed / (2**31);
       };
       const points = [];
+      const center = 0.5; // Normalized center
+      const maxRadius = 0.45; // Leave some padding from edges
       for (let i = 0; i < numPoints; i++) {
         const angle = rng() * 2 * Math.PI;
-        const r = Math.sqrt(rng()) * radius;
-        const x = r * Math.cos(angle) + centerX;
-        const y = r * Math.sin(angle) + centerY;
+        const r = Math.sqrt(rng()) * maxRadius;
+        const x = r * Math.cos(angle) + center;
+        const y = r * Math.sin(angle) + center;
         points.push({ x, y, angle, id: i });
       }
       return points;
     };
 
+    // Scale normalized points to actual canvas size
+    const scalePoints = (normalizedPoints, canvasSize) => {
+      return normalizedPoints.map(p => ({
+        ...p,
+        scaledX: p.x * canvasSize,
+        scaledY: p.y * canvasSize
+      }));
+    };
+
+    // Distance using normalized coordinates for consistent calculations
     const distance = (start, end) => Math.hypot(end.y - start.y, end.x - start.x);
+
+    // Distance using scaled coordinates for display
+    const scaledDistance = (start, end) => Math.hypot(end.scaledY - start.scaledY, end.scaledX - start.scaledX);
 
     function createDistanceMatrix(points) {
       const n = points.length;
@@ -298,14 +322,14 @@
     }
 
     function drawLineSegment(container, start, end, color = "green", opacity = 1) {
-      const length = Math.hypot(end.y - start.y, end.x - start.x);
-      const deg = Math.atan2(end.y - start.y, end.x - start.x) * 180 / Math.PI;
+      const length = Math.hypot(end.scaledY - start.scaledY, end.scaledX - start.scaledX);
+      const deg = Math.atan2(end.scaledY - start.scaledY, end.scaledX - start.scaledX) * 180 / Math.PI;
 
       const newdiv = document.createElement('div');
       newdiv.style.width = length + "px";
       newdiv.style.height = "1px";
-      newdiv.style.left = start.x + "px";
-      newdiv.style.top = start.y + "px";
+      newdiv.style.left = start.scaledX + "px";
+      newdiv.style.top = start.scaledY + "px";
       newdiv.style.background = color;
       newdiv.style.opacity = opacity;
       newdiv.style.transformOrigin = "left 50%";
@@ -317,11 +341,11 @@
     }
 
     function displayPoints(container, points) {
-      points.forEach(({ x, y }) => {
+      points.forEach(({ scaledX, scaledY }) => {
         const pointDiv = document.createElement('div');
         pointDiv.classList.add('point');
-        pointDiv.style.left = `${x - 3}px`;
-        pointDiv.style.top = `${y - 3}px`;
+        pointDiv.style.left = `${scaledX - 3}px`;
+        pointDiv.style.top = `${scaledY - 3}px`;
         container.appendChild(pointDiv);
       });
     }
@@ -677,10 +701,19 @@
         document.getElementById('canvas5')
       ];
 
+      // Generate normalized points once (same for all canvases)
+      const normalizedPoints = generateNormalizedPoints(NUM_POINTS);
+
       containers.forEach(container => {
-        const points = generateRandomPoints(NUM_POINTS, RADIUS/2, 150, 150);
+        // Get actual canvas size
+        const canvasSize = container.offsetWidth || 250; // Fallback to 250 if not yet rendered
+
+        // Scale points to current canvas size
+        const points = scalePoints(normalizedPoints, canvasSize);
         displayPoints(container, points);
         container.points = points;
+        container.normalizedPoints = normalizedPoints;
+        container.canvasSize = canvasSize;
         container.graph = createDistanceMatrix(points);
         container.lowerBound = calculateMST(container.graph);
         container.upperBound = calculateUpperBound(container.graph);
@@ -744,6 +777,46 @@
         `;
       });
     }
+
+    // Debounce function for resize handler
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
+    // Re-render canvases on resize
+    const handleResize = debounce(() => {
+      // Clear all canvases and re-run
+      const containers = [
+        document.getElementById('canvas1'),
+        document.getElementById('canvas2'),
+        document.getElementById('canvas3'),
+        document.getElementById('canvas4'),
+        document.getElementById('canvas5')
+      ];
+
+      containers.forEach(container => {
+        container.innerHTML = '';
+      });
+
+      // Reset progress bars and stats
+      for (let i = 1; i <= 5; i++) {
+        document.getElementById(`progress${i}`).style.width = '0%';
+        document.getElementById(`stats${i}`).innerHTML = 'Resizing...';
+      }
+
+      runComparison();
+    }, 250);
+
+    // Listen for resize events
+    window.addEventListener('resize', handleResize);
 
     // Start comparison
     runComparison();
