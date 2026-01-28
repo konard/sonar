@@ -4,118 +4,157 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="initial-scale=1.0">
-  <title>2-Opt Path Optimization</title>
+  <title>2-Opt Path Optimization - Side by Side</title>
   <style>
     body {
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
+      padding: 20px;
       background: #f0f0f0;
+      font-family: Arial, sans-serif;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .comparison-container {
+      display: flex;
+      gap: 40px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      text-align: center;
+      color: #333;
     }
 
     .canvas-container {
       position: relative;
-      width: 800px;
-      height: 800px;
+      width: 400px;
+      height: 400px;
       background: white;
       border: 1px solid #ccc;
       border-radius: 50%;
     }
 
-    .line,
     .point {
       position: absolute;
-    }
-
-    .point {
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       background: red;
       border-radius: 50%;
     }
 
-    .point :first {
-      width: 10px;
-      height: 10px;
-      background: green;
-      border-radius: 50%;
-    }
-
-    .point :last {
-      width: 10px;
-      height: 10px;
-      background: blue;
-      border-radius: 50%;
-    }
-
-    .segment {
-      position: absolute;
-      background: green;
-      height: 2px;
-    }
-
-    .controls {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(255, 255, 255, 0.9);
+    .stats {
+      font-size: 12px;
+      background: #f8f9fa;
       padding: 10px;
       border-radius: 5px;
-      font-family: Arial, sans-serif;
+      margin-top: 15px;
+    }
+
+    .improvement {
+      margin-top: 20px;
+      padding: 15px;
+      background: #d4edda;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .legend {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 10px;
       font-size: 12px;
     }
 
-    .progress {
-      margin-top: 10px;
-      font-weight: bold;
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legend-color {
+      width: 20px;
+      height: 3px;
     }
   </style>
 </head>
 
 <body>
-  <div class="canvas-container">
-    <div class="controls">
-      <div>2-Opt Path Optimization</div>
-      <div id="stats"></div>
-      <div id="progress" class="progress"></div>
-    </div>
-    <div class="line" id="rotating-line"></div>
+  <div class="header">
+    <h1>2-Opt Path Optimization</h1>
+    <p>Side-by-side comparison: Without optimization vs With 2-opt optimization</p>
   </div>
 
-  <script>
-    const container = document.querySelector('.canvas-container');
-    const statsDiv = document.getElementById('stats');
-    const progressDiv = document.getElementById('progress');
+  <div class="comparison-container">
+    <div class="panel">
+      <div class="panel-title">Without Optimization (Nearest Neighbor)</div>
+      <div class="canvas-container" id="canvas-unoptimized"></div>
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-color" style="background: blue;"></div>
+          <span>Initial tour (nearest neighbor)</span>
+        </div>
+      </div>
+      <div class="stats" id="stats-unoptimized">Initializing...</div>
+    </div>
 
+    <div class="panel">
+      <div class="panel-title">With 2-Opt Optimization</div>
+      <div class="canvas-container" id="canvas-optimized"></div>
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-color" style="background: green;"></div>
+          <span>Optimized tour (2-opt)</span>
+        </div>
+      </div>
+      <div class="stats" id="stats-optimized">Initializing...</div>
+    </div>
+  </div>
+
+  <div class="improvement" id="improvement">Calculating improvement...</div>
+
+  <script>
     function randomIntFromInterval(min, max) {
       return Math.floor(Math.random() * (max - min + 1) + min);
     }
 
-    const NUM_POINTS = randomIntFromInterval(8, 100); // Configurable number of points
-    const RADIUS = 700; // Radius of the circle
+    const NUM_POINTS = randomIntFromInterval(30, 80);
 
-    // Function to generate random points within a circle
-    const generateRandomPoints = (numPoints, radius) => {
+    // Generate random points with a random seed (different on each reload)
+    const generateRandomPoints = (numPoints, radius, centerX, centerY) => {
       const points = [];
       for (let i = 0; i < numPoints; i++) {
         const angle = Math.random() * 2 * Math.PI;
         const r = Math.sqrt(Math.random()) * radius;
-        const x = r * Math.cos(angle) + container.clientWidth / 2;
-        const y = r * Math.sin(angle) + container.clientHeight / 2;
+        const x = r * Math.cos(angle) + centerX;
+        const y = r * Math.sin(angle) + centerY;
         points.push({ x, y, angle, id: i });
       }
       return points;
     };
 
-    // Create points
-    const points = generateRandomPoints(NUM_POINTS, RADIUS / 2);
-
-    // Precise distance calculation
     const distance = (start, end) => Math.hypot(end.y - start.y, end.x - start.x);
 
-    // Create distance matrix for efficient lookups
     function createDistanceMatrix(points) {
       const n = points.length;
       const graph = Array.from({ length: n }, () => Array(n).fill(0));
@@ -129,9 +168,6 @@
       return graph;
     }
 
-    const graph = createDistanceMatrix(points);
-
-    // Calculate Minimum Spanning Tree (MST) for lower bound
     function calculateMST(graph) {
       const n = graph.length;
       const selected = new Array(n).fill(false);
@@ -162,7 +198,6 @@
       return mstWeight;
     }
 
-    // Calculate Upper Bound (longest possible tour)
     function calculateUpperBound(graph) {
       const n = graph.length;
       let maxTour = 0;
@@ -173,14 +208,10 @@
       return maxTour;
     }
 
-    const lowerBound = calculateMST(graph);
-    const upperBound = calculateUpperBound(graph);
-
-    // Initial tour using nearest neighbor heuristic
     function nearestNeighborTour(points, graph) {
       const n = points.length;
       const visited = new Array(n).fill(false);
-      const tour = [0]; // Start from point 0
+      const tour = [0];
       visited[0] = true;
       let current = 0;
 
@@ -203,7 +234,6 @@
       return tour;
     }
 
-    // Calculate tour length
     function calculateTourLength(tour, graph) {
       let totalDistance = 0;
       const n = tour.length;
@@ -213,7 +243,6 @@
       return totalDistance;
     }
 
-    // 2-opt optimization
     function twoOptImprove(tour, graph, maxIterations = 1000) {
       const n = tour.length;
       let improved = true;
@@ -226,16 +255,12 @@
 
         for (let i = 0; i < n - 1; i++) {
           for (let j = i + 2; j < n; j++) {
-            if (j === n - 1 && i === 0) continue; // Skip if it would create the same tour
-
-            // Current edges: (tour[i], tour[i+1]) and (tour[j], tour[(j+1)%n])
-            // New edges: (tour[i], tour[j]) and (tour[i+1], tour[(j+1)%n])
+            if (j === n - 1 && i === 0) continue;
 
             const currentDistance = graph[tour[i]][tour[i + 1]] + graph[tour[j]][tour[(j + 1) % n]];
             const newDistance = graph[tour[i]][tour[j]] + graph[tour[i + 1]][tour[(j + 1) % n]];
 
             if (newDistance < currentDistance) {
-              // Reverse the order between i+1 and j
               const newTour = [...tour];
               for (let k = 0; k <= j - i - 1; k++) {
                 newTour[i + 1 + k] = tour[j - k];
@@ -243,9 +268,6 @@
               tour = newTour;
               improved = true;
               improvements++;
-
-              // Update progress
-              progressDiv.textContent = `Improvements: ${improvements}, Iteration: ${iterations}`;
             }
           }
         }
@@ -255,102 +277,107 @@
     }
 
     function calculateEfficiency(solutionPathLength, minimumPossiblePathLength, maximumPossiblePathLength) {
-      const percentage = ((maximumPossiblePathLength - solutionPathLength) / (maximumPossiblePathLength - minimumPossiblePathLength)) * 100;
-      return percentage;
+      return ((maximumPossiblePathLength - solutionPathLength) / (maximumPossiblePathLength - minimumPossiblePathLength)) * 100;
     }
 
-    // Display points
-    points.forEach(({ x, y }) => {
-      const pointDiv = document.createElement('div');
-      pointDiv.classList.add('point');
-      pointDiv.style.left = `${x - 5}px`;
-      pointDiv.style.top = `${y - 5}px`;
-      container.appendChild(pointDiv);
-    });
+    function displayPoints(container, points) {
+      points.forEach(({ x, y }) => {
+        const pointDiv = document.createElement('div');
+        pointDiv.classList.add('point');
+        pointDiv.style.left = `${x - 4}px`;
+        pointDiv.style.top = `${y - 4}px`;
+        container.appendChild(pointDiv);
+      });
+    }
 
-    function drawLineSegment(start, end, size, opacity, color) {
-      var length = Math.hypot(end.y - start.y, end.x - start.x),
-        deg = Math.atan2(end.y - start.y, end.x - start.x) * 180 / Math.PI;
+    function drawLineSegment(container, start, end, color = "green", opacity = 1) {
+      const length = Math.hypot(end.y - start.y, end.x - start.x);
+      const deg = Math.atan2(end.y - start.y, end.x - start.x) * 180 / Math.PI;
 
-      var newdiv = document.createElement('div');
+      const newdiv = document.createElement('div');
       newdiv.style.width = length + "px";
-      newdiv.style.height = (size || 2) + "px";
+      newdiv.style.height = "2px";
       newdiv.style.left = start.x + "px";
       newdiv.style.top = start.y + "px";
-      newdiv.style.background = color || "green";
-      newdiv.style.opacity = opacity || 1;
+      newdiv.style.background = color;
+      newdiv.style.opacity = opacity;
       newdiv.style.transformOrigin = "left 50%";
       newdiv.style.transform = "rotate(" + deg + "deg)";
       newdiv.style.position = "absolute";
+      newdiv.style.pointerEvents = "none";
 
       container.appendChild(newdiv);
     }
 
-    function visualizeTour(tour, color = "green", opacity = 1) {
-      // Clear previous tour visualization
-      const existingSegments = container.querySelectorAll('.segment, div[style*="rotate"]');
-      existingSegments.forEach(segment => {
-        if (segment.style.background === color) {
-          segment.remove();
-        }
-      });
-
-      // Draw new tour
+    function visualizeTour(container, points, tour, color = "green") {
       for (let i = 0; i < tour.length; i++) {
         const start = points[tour[i]];
         const end = points[tour[(i + 1) % tour.length]];
-        drawLineSegment(start, end, 2, opacity, color);
+        drawLineSegment(container, start, end, color);
       }
     }
 
-    async function runOptimization() {
-      progressDiv.textContent = "Generating initial tour...";
+    async function runComparison() {
+      const containerUnoptimized = document.getElementById('canvas-unoptimized');
+      const containerOptimized = document.getElementById('canvas-optimized');
 
-      // Get initial tour using nearest neighbor
-      let tour = nearestNeighborTour(points, graph);
-      let initialLength = calculateTourLength(tour, graph);
+      // Generate same points for both panels
+      const points = generateRandomPoints(NUM_POINTS, 180, 200, 200);
+      const graph = createDistanceMatrix(points);
+      const lowerBound = calculateMST(graph);
+      const upperBound = calculateUpperBound(graph);
 
-      // Visualize initial tour
-      visualizeTour(tour, "blue", 0.5);
+      // Display points on both canvases
+      displayPoints(containerUnoptimized, points);
+      displayPoints(containerOptimized, points);
 
-      progressDiv.textContent = "Running 2-opt optimization...";
-      await new Promise(resolve => setTimeout(resolve, 500)); // Brief pause for visualization
+      // Get initial tour using nearest neighbor (same for both)
+      const initialTour = nearestNeighborTour(points, graph);
+      const initialLength = calculateTourLength(initialTour, graph);
 
-      // Apply 2-opt optimization
-      const result = twoOptImprove(tour, graph);
-      tour = result.tour;
-      let optimizedLength = calculateTourLength(tour, graph);
+      // Visualize unoptimized tour
+      visualizeTour(containerUnoptimized, points, initialTour, "blue");
+      const initialEfficiency = calculateEfficiency(initialLength, lowerBound, upperBound);
 
-      // Visualize optimized tour
-      visualizeTour(tour, "green", 1);
-
-      const efficiency = calculateEfficiency(optimizedLength, lowerBound, upperBound);
-      const improvement = ((initialLength - optimizedLength) / initialLength * 100);
-
-      statsDiv.innerHTML = `
+      document.getElementById('stats-unoptimized').innerHTML = `
         <div>Points: ${NUM_POINTS}</div>
-        <div>Initial tour: ${initialLength.toFixed(2)}</div>
-        <div>Optimized tour: ${optimizedLength.toFixed(2)}</div>
-        <div>Improvement: ${improvement.toFixed(2)}%</div>
+        <div>Path Length: ${initialLength.toFixed(2)}</div>
         <div>Bounds: [${lowerBound.toFixed(2)}, ${upperBound.toFixed(2)}]</div>
-        <div>Efficiency: ${efficiency.toFixed(2)}%</div>
+        <div>Efficiency: ${initialEfficiency.toFixed(2)}%</div>
       `;
 
-      progressDiv.textContent = `Complete! ${result.improvements} improvements in ${result.iterations} iterations`;
+      // Apply 2-opt optimization
+      await new Promise(resolve => setTimeout(resolve, 300)); // Brief pause
 
-      console.log(`2-Opt Optimization Results:
-Points: ${NUM_POINTS}
-Initial solution: ${initialLength.toFixed(2)}
-Optimized solution: ${optimizedLength.toFixed(2)}
-Improvement: ${improvement.toFixed(2)}%
-Bounds: [${lowerBound.toFixed(2)}, ${upperBound.toFixed(2)}]
-Efficiency: ${efficiency.toFixed(2)}%
-Improvements made: ${result.improvements}
-Iterations: ${result.iterations}`);
+      const result = twoOptImprove([...initialTour], graph);
+      const optimizedTour = result.tour;
+      const optimizedLength = calculateTourLength(optimizedTour, graph);
+
+      // Visualize optimized tour
+      visualizeTour(containerOptimized, points, optimizedTour, "green");
+      const optimizedEfficiency = calculateEfficiency(optimizedLength, lowerBound, upperBound);
+
+      document.getElementById('stats-optimized').innerHTML = `
+        <div>Points: ${NUM_POINTS}</div>
+        <div>Path Length: ${optimizedLength.toFixed(2)}</div>
+        <div>Bounds: [${lowerBound.toFixed(2)}, ${upperBound.toFixed(2)}]</div>
+        <div>Efficiency: ${optimizedEfficiency.toFixed(2)}%</div>
+        <div>Iterations: ${result.iterations}, Improvements: ${result.improvements}</div>
+      `;
+
+      // Calculate and display improvement
+      const improvement = ((initialLength - optimizedLength) / initialLength * 100);
+      const efficiencyGain = optimizedEfficiency - initialEfficiency;
+
+      document.getElementById('improvement').innerHTML = `
+        <div>Path Length Reduction: ${improvement.toFixed(2)}%</div>
+        <div>Efficiency Improvement: +${efficiencyGain.toFixed(2)} percentage points</div>
+        <div>(${initialLength.toFixed(2)} → ${optimizedLength.toFixed(2)})</div>
+      `;
     }
 
-    // Start the optimization
-    runOptimization();
+    // Start the comparison
+    runComparison();
   </script>
 </body>
 
