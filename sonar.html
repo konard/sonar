@@ -4,9 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Angular Sort Algorithm - Point Sorting by Angle</title>
+  <title>Sonar Visit Algorithm - 360 Degree Rotation Sweep</title>
   <script src="algorithms/utils.js"></script>
-  <script src="algorithms/angular-sort.js"></script>
+  <script src="algorithms/sonar-visit.js"></script>
   <style>
     :root {
       font-size: 16px;
@@ -81,6 +81,18 @@
       height: 100%;
     }
 
+    .rotating-line {
+      position: absolute;
+      width: 0.125rem;
+      height: 50%;
+      background: blue;
+      transform-origin: bottom center;
+      left: 50%;
+      bottom: 50%;
+      transform: translateX(-50%) rotate(0deg);
+      z-index: 10;
+    }
+
     .point {
       position: absolute;
       width: 0.5rem;
@@ -147,27 +159,12 @@
 
     .complexity-badge {
       display: inline-block;
-      background: #fd7e14;
+      background: #17a2b8;
       color: white;
       padding: 0.25rem 0.5rem;
       border-radius: 0.25rem;
       font-size: 0.75rem;
       font-weight: bold;
-    }
-
-    .progress {
-      height: 0.25rem;
-      background: #e9ecef;
-      border-radius: 0.125rem;
-      margin: 0.625rem 0;
-      overflow: hidden;
-    }
-
-    .progress-bar {
-      height: 100%;
-      background: linear-gradient(90deg, #28a745, #20c997);
-      width: 0%;
-      transition: width 0.1s ease;
     }
 
     @media (max-width: 48rem) {
@@ -200,8 +197,8 @@
 
 <body>
   <div class="header">
-    <h1>Angular Sort Algorithm</h1>
-    <p>Sorting Points by Angle from Center</p>
+    <h1>Sonar Visit Algorithm</h1>
+    <p>360 Degree Rotation Sweep for Path Optimization</p>
     <p id="grid-info" class="header-info"></p>
     <p class="header-info">
       <a href="https://github.com/konard/sonar" target="_blank" rel="noopener noreferrer">View source code on GitHub</a>
@@ -210,31 +207,31 @@
 
   <div class="main-content">
     <div class="canvas-container">
-      <div class="canvas-inner" id="canvas"></div>
+      <div class="canvas-inner" id="canvas">
+        <div class="rotating-line" id="rotating-line"></div>
+      </div>
     </div>
 
     <div class="stats-container">
-      <div class="progress"><div class="progress-bar" id="progress"></div></div>
       <div class="stats" id="stats">Initializing...</div>
     </div>
 
     <div class="algorithm-description">
-      <h2>How Angular Sort Works <span class="complexity-badge">O(n log n)</span></h2>
+      <h2>How Sonar Visit Works <span class="complexity-badge">O(1)*</span></h2>
       <p>
-        The Angular Sort algorithm sorts points by their angle from the center of the circular area,
-        then connects them sequentially to form a tour.
+        The Sonar Visit algorithm is inspired by sonar radar sweep. It performs a 360-degree rotation sweep
+        in fixed angle steps, connecting points as they are encountered by the rotating line.
       </p>
       <p><strong>Key characteristics:</strong></p>
       <ul>
-        <li>Each point's angle is pre-calculated when placed on the grid</li>
-        <li>Points are sorted by angle using an efficient sorting algorithm</li>
-        <li>Sequential connection creates a tour that follows the angular order</li>
-        <li>Fast O(n log n) complexity dominated by the sorting step</li>
+        <li>Uses fixed angle steps determined by grid resolution, not point count</li>
+        <li>Points on the same angle are connected by distance from center (closest first)</li>
+        <li>The number of angle steps is O(1) with respect to point count</li>
+        <li>Each point has its angle pre-calculated when placed on the grid</li>
       </ul>
       <p>
-        <strong>Note:</strong> While fast, angular sort can produce suboptimal tours when points
-        at similar angles have very different distances from center. Combine with Zigzag or 2-Opt
-        for better results.
+        <strong>*Complexity note:</strong> The sweep uses a fixed number of angle steps (4 times GRID_SIZE),
+        making the core algorithm constant-time. Point assignment to angle buckets is O(n).
       </p>
     </div>
   </div>
@@ -243,6 +240,7 @@
     // Configuration
     const NUM_POINTS = 32;
     const GRID_SIZE = 40;
+    const ANIMATION_SPEED = 0.5; // degrees per frame
 
     // Use utility functions from loaded modules
     const distance = TSPUtils.distance;
@@ -334,11 +332,19 @@
       });
     }
 
-    // Main execution with animated connection
-    async function runAngularSortVisualization() {
+    function visualizeTour(container, points, tour, color = "#17a2b8") {
+      for (let i = 0; i < tour.length; i++) {
+        const start = points[tour[i]];
+        const end = points[tour[(i + 1) % tour.length]];
+        drawLineSegment(container, start, end, color);
+      }
+    }
+
+    // Main execution with animated sweep
+    async function runSonarVisualization() {
       const container = document.getElementById('canvas');
+      const line = document.getElementById('rotating-line');
       const statsDiv = document.getElementById('stats');
-      const progressBar = document.getElementById('progress');
 
       // Generate normalized points (each with pre-calculated angle)
       const normalizedPoints = generateNormalizedPoints(NUM_POINTS);
@@ -352,43 +358,92 @@
       document.getElementById('grid-info').textContent =
         `${NUM_POINTS} points on a ${GRID_SIZE}x${GRID_SIZE} virtual grid`;
 
-      // Get the angular sorted tour
-      const tour = AngularSort.generateTour(normalizedPoints);
+      // Animate the rotating line sweep
+      let currentAngle = 0;
+      const angleSteps = 4 * GRID_SIZE;
+      const angleStep = 360 / angleSteps;
 
-      // Animate the tour construction
-      let currentEdge = 0;
+      // Track connected points for visualization
+      const connectedPoints = [];
+      const pointsByAngle = new Map();
 
-      function animateEdge() {
-        if (currentEdge < tour.length) {
-          const startIdx = tour[currentEdge];
-          const endIdx = tour[(currentEdge + 1) % tour.length];
-          drawLineSegment(container, points[startIdx], points[endIdx], "#fd7e14", 0.8);
+      // Group points by their angle bucket
+      points.forEach((point, idx) => {
+        const bucketIndex = Math.floor((point.angle / (2 * Math.PI)) * angleSteps);
+        if (!pointsByAngle.has(bucketIndex)) {
+          pointsByAngle.set(bucketIndex, []);
+        }
+        pointsByAngle.get(bucketIndex).push({ ...point, id: idx });
+      });
 
-          currentEdge++;
-          progressBar.style.width = (currentEdge / tour.length * 100) + '%';
+      // Sort points within each bucket by distance from center
+      const center = { percentX: 50, percentY: 50 };
+      pointsByAngle.forEach((bucketPoints) => {
+        bucketPoints.sort((a, b) => {
+          const distA = Math.hypot(a.percentX - center.percentX, a.percentY - center.percentY);
+          const distB = Math.hypot(b.percentX - center.percentX, b.percentY - center.percentY);
+          return distA - distB;
+        });
+      });
 
-          requestAnimationFrame(animateEdge);
+      // Animation function
+      let currentBucket = 0;
+      function animate() {
+        // Rotate line
+        line.style.transform = `translateX(-50%) rotate(${currentAngle + 90}deg)`;
+
+        // Check for points at current angle bucket
+        if (pointsByAngle.has(currentBucket)) {
+          const bucketPoints = pointsByAngle.get(currentBucket);
+          bucketPoints.forEach(point => {
+            if (!connectedPoints.includes(point.id)) {
+              if (connectedPoints.length > 0) {
+                const lastPointId = connectedPoints[connectedPoints.length - 1];
+                drawLineSegment(container, points[lastPointId], points[point.id], "#17a2b8", 0.8);
+              }
+              connectedPoints.push(point.id);
+            }
+          });
+        }
+
+        currentAngle += ANIMATION_SPEED;
+        currentBucket = Math.floor((currentAngle / 360) * angleSteps) % angleSteps;
+
+        // Continue until we complete two full rotations
+        if (currentAngle < 720) {
+          requestAnimationFrame(animate);
         } else {
+          // Connect last point to first to complete the tour
+          if (connectedPoints.length > 1) {
+            const lastPointId = connectedPoints[connectedPoints.length - 1];
+            const firstPointId = connectedPoints[0];
+            drawLineSegment(container, points[lastPointId], points[firstPointId], "#17a2b8", 0.8);
+          }
+
           // Calculate and display final statistics
+          const tour = SonarVisit.generateTour(normalizedPoints, GRID_SIZE);
           const pathLength = calculateTourLength(tour, graph);
 
           statsDiv.innerHTML = `
-            <div><strong>Algorithm:</strong> Angular Sort</div>
+            <div><strong>Algorithm:</strong> Sonar Visit (360-degree sweep)</div>
             <div><strong>Points:</strong> ${NUM_POINTS}</div>
             <div><strong>Path Length:</strong> ${pathLength.toFixed(2)}</div>
             <div><strong>Tour Order:</strong> ${tour.slice(0, 10).join(' -> ')}${tour.length > 10 ? ' ...' : ''}</div>
-            <div><strong>Complexity:</strong> O(n log n) dominated by sorting</div>
+            <div><strong>Complexity:</strong> O(1) angle steps + O(n) point assignment</div>
           `;
+
+          // Hide the rotating line
+          line.style.display = 'none';
         }
       }
 
       // Start animation
-      statsDiv.innerHTML = '<div>Sorting points by angle and connecting...</div>';
-      animateEdge();
+      statsDiv.innerHTML = '<div>Sweeping...</div>';
+      animate();
     }
 
     // Start visualization when page loads
-    runAngularSortVisualization();
+    runSonarVisualization();
   </script>
 </body>
 

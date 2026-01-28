@@ -3,149 +3,350 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="initial-scale=1.0">
-  <title>Rotating Line and Connecting Points</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zigzag Optimization with Efficiency Metrics</title>
+  <script src="algorithms/utils.js"></script>
+  <script src="algorithms/angular-sort.js"></script>
+  <script src="algorithms/zigzag.js"></script>
   <style>
+    :root {
+      font-size: 16px;
+    }
+
     body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
       margin: 0;
+      padding: 1.25rem;
       background: #f0f0f0;
+      font-family: Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 1.875rem;
+    }
+
+    .header h1 {
+      color: #333;
+      margin-bottom: 0.5rem;
+    }
+
+    .header p {
+      color: #666;
+      margin: 0.25rem 0;
+    }
+
+    .header-info {
+      font-size: 0.75rem;
+      color: #666;
+      margin-top: 0.625rem;
+    }
+
+    .header-info a {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    .header-info a:hover {
+      text-decoration: underline;
+    }
+
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+      width: 100%;
+      max-width: 50rem;
     }
 
     .canvas-container {
       position: relative;
-      width: 800px;
-      height: 800px;
+      width: 100%;
+      max-width: 31.25rem;
+      padding-bottom: min(100%, 31.25rem);
       background: white;
-      border: 1px solid #ccc;
+      border: 0.0625rem solid #ccc;
       border-radius: 50%;
+      box-sizing: border-box;
     }
 
-    .line,
+    .canvas-inner {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
     .point {
       position: absolute;
-    }
-
-    .point {
-      width: 10px;
-      height: 10px;
+      width: 0.5rem;
+      height: 0.5rem;
       background: red;
       border-radius: 50%;
+      transform: translate(-50%, -50%);
     }
 
-    .point :first {
-      width: 10px;
-      height: 10px;
-      background: green;
-      border-radius: 50%;
-    }
-
-    .point :last {
-      width: 10px;
-      height: 10px;
-      background: blue;
-      border-radius: 50%;
-    }
-
-    .segment {
+    .line-segment {
       position: absolute;
-      background: green;
-      height: 2px;
+      height: 0.125rem;
+      transform-origin: left center;
+      pointer-events: none;
+    }
+
+    .stats-container {
+      background: white;
+      border-radius: 0.625rem;
+      padding: 1.25rem;
+      box-shadow: 0 0.125rem 0.625rem rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 31.25rem;
+    }
+
+    .stats {
+      font-size: 0.875rem;
+      color: #333;
+    }
+
+    .stats div {
+      margin: 0.5rem 0;
+    }
+
+    .efficiency-highlight {
+      background: #d4edda;
+      padding: 0.5rem;
+      border-radius: 0.25rem;
+      font-weight: bold;
+      text-align: center;
+      margin-top: 0.625rem;
+    }
+
+    .legend {
+      display: flex;
+      gap: 1.25rem;
+      justify-content: center;
+      margin-bottom: 0.625rem;
+      font-size: 0.75rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.3125rem;
+    }
+
+    .legend-color {
+      width: 1.25rem;
+      height: 0.1875rem;
+    }
+
+    .algorithm-description {
+      background: white;
+      border-radius: 0.625rem;
+      padding: 1.25rem;
+      box-shadow: 0 0.125rem 0.625rem rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 31.25rem;
+    }
+
+    .algorithm-description h2 {
+      font-size: 1.125rem;
+      margin-top: 0;
+      margin-bottom: 1rem;
+      color: #333;
+    }
+
+    .algorithm-description p {
+      font-size: 0.875rem;
+      color: #666;
+      line-height: 1.6;
+      margin: 0.5rem 0;
+    }
+
+    .algorithm-description ul {
+      font-size: 0.875rem;
+      color: #666;
+      line-height: 1.6;
+      padding-left: 1.25rem;
+    }
+
+    .complexity-badge {
+      display: inline-block;
+      background: #28a745;
+      color: white;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+
+    .progress {
+      height: 0.25rem;
+      background: #e9ecef;
+      border-radius: 0.125rem;
+      margin: 0.625rem 0;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #28a745, #20c997);
+      width: 0%;
+      transition: width 0.1s ease;
+    }
+
+    @media (max-width: 48rem) {
+      body {
+        padding: 0.75rem;
+      }
+
+      .header h1 {
+        font-size: 1.5rem;
+      }
+
+      .canvas-container {
+        max-width: 100%;
+        padding-bottom: 100%;
+      }
+
+      .stats-container,
+      .algorithm-description {
+        padding: 1rem;
+      }
+    }
+
+    @media (max-width: 30rem) {
+      :root {
+        font-size: 14px;
+      }
     }
   </style>
 </head>
 
 <body>
-  <div class="canvas-container">
-    <div class="line" id="rotating-line"></div>
+  <div class="header">
+    <h1>Zigzag with Efficiency Metrics</h1>
+    <p>Measuring Optimization Quality with Bounds</p>
+    <p id="grid-info" class="header-info"></p>
+    <p class="header-info">
+      <a href="https://github.com/konard/sonar" target="_blank" rel="noopener noreferrer">View source code on GitHub</a>
+    </p>
+  </div>
+
+  <div class="main-content">
+    <div class="canvas-container">
+      <div class="canvas-inner" id="canvas"></div>
+    </div>
+
+    <div class="stats-container">
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-color" style="background: green;"></div>
+          <span>Standard path</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: blue;"></div>
+          <span>Zigzag optimization</span>
+        </div>
+      </div>
+      <div class="progress"><div class="progress-bar" id="progress"></div></div>
+      <div class="stats" id="stats">Initializing...</div>
+    </div>
+
+    <div class="algorithm-description">
+      <h2>Efficiency Calculation <span class="complexity-badge">O(n)</span></h2>
+      <p>
+        This page demonstrates the Zigzag optimization with detailed efficiency metrics,
+        comparing the solution against theoretical bounds.
+      </p>
+      <p><strong>Bounds explanation:</strong></p>
+      <ul>
+        <li><strong>Lower bound (MST):</strong> The Minimum Spanning Tree weight provides a lower bound for TSP</li>
+        <li><strong>Upper bound:</strong> Sum of maximum edges from each point (worst-case tour)</li>
+        <li><strong>Efficiency:</strong> How close the solution is to the lower bound, relative to the range</li>
+      </ul>
+      <p><strong>Formula:</strong></p>
+      <p style="font-family: monospace; background: #f8f9fa; padding: 0.5rem; border-radius: 0.25rem;">
+        Efficiency = (UpperBound - Solution) / (UpperBound - LowerBound) x 100%
+      </p>
+      <p>
+        Higher efficiency means the solution is closer to the theoretical optimal.
+      </p>
+    </div>
   </div>
 
   <script>
-    const container = document.querySelector('.canvas-container');
+    // Configuration
+    const NUM_POINTS = 32;
+    const GRID_SIZE = 40;
 
-    function randomIntFromInterval(min, max) {
-      return Math.floor(Math.random() * (max - min + 1) + min);
-    }
+    // Use utility functions from loaded modules
+    const distance = TSPUtils.distance;
+    const createDistanceMatrix = TSPUtils.createDistanceMatrix;
+    const calculateTourLength = TSPUtils.calculateTourLength;
+    const calculateMST = TSPUtils.calculateMST;
 
-    const NUM_POINTS = randomIntFromInterval(8, 1000); // Configurable number of points
-    const RADIUS = 700; // Radius of the circle
+    // Generate random seed for variety on each reload
+    const initialSeed = Math.floor(Math.random() * 1000000);
 
-    // Function to generate random points within a circle
-    const generateRandomPoints = (numPoints, radius) => {
-      const points = [];
-      for (let i = 0; i < numPoints; i++) {
-        const angle = Math.random() * 2 * Math.PI;
-        const r = Math.sqrt(Math.random()) * radius;
-        const x = r * Math.cos(angle) + container.clientWidth / 2;
-        const y = r * Math.sin(angle) + container.clientHeight / 2;
-        points.push({ x, y, angle });
+    // Generate points on a virtual grid for consistent placement
+    const generateNormalizedPoints = (numPoints, gridSize = GRID_SIZE, seed = initialSeed) => {
+      let currentSeed = seed;
+      const rng = () => {
+        currentSeed = (currentSeed * 1103515245 + 12345) % (2 ** 31);
+        return currentSeed / (2 ** 31);
+      };
+
+      const center = 0.5;
+      const maxRadius = 0.45;
+      const gridStep = 1 / gridSize;
+      const validPositions = [];
+
+      for (let gx = 0; gx < gridSize; gx++) {
+        for (let gy = 0; gy < gridSize; gy++) {
+          const x = (gx + 0.5) * gridStep;
+          const y = (gy + 0.5) * gridStep;
+          const dx = x - center;
+          const dy = y - center;
+          const distFromCenter = Math.sqrt(dx * dx + dy * dy);
+
+          if (distFromCenter <= maxRadius) {
+            // Pre-calculate angle at grid placement time
+            const angle = Math.atan2(dy, dx);
+            validPositions.push({
+              x,
+              y,
+              angle: angle < 0 ? angle + 2 * Math.PI : angle,
+              gx,
+              gy
+            });
+          }
+        }
       }
-      return points;
+
+      // Fisher-Yates shuffle
+      for (let i = validPositions.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [validPositions[i], validPositions[j]] = [validPositions[j], validPositions[i]];
+      }
+
+      const points = validPositions.slice(0, Math.min(numPoints, validPositions.length));
+      return points.map((p, idx) => ({ ...p, id: idx }));
     };
 
-    // Create points
-    const points = generateRandomPoints(NUM_POINTS, RADIUS / 2);
+    const scalePointsToPercent = (normalizedPoints) => {
+      return normalizedPoints.map(p => ({
+        ...p,
+        percentX: p.x * 100,
+        percentY: p.y * 100
+      }));
+    };
 
-    // Calculate Euclidean distance between two cities
-    // function distance(leftPoint, rightPoint) {
-    //   return Math.sqrt((leftPoint.x - rightPoint.x) ** 2 + (leftPoint.y - rightPoint.y) ** 2);
-    // }
-    // Precise but slow
-    const distance = (start, end) => Math.hypot(end.y - start.y, end.x - start.x);
-
-    // Create distance matrix
-    function createDistanceMatrix(points) {
-      const n = points.length;
-      const graph = Array.from({ length: n }, () => Array(n).fill(0));
-      for (let i = 0; i < n; i++) {
-        for (let j = 0; j < n; j++) {
-          if (i !== j) {
-            graph[i][j] = distance(points[i], points[j]);
-          }
-        }
-      }
-      return graph;
-    }
-
-    const graph = createDistanceMatrix(points);
-
-    // console.log('graph', graph);
-
-    // Calculate Minimum Spanning Tree (MST) for lower bound
-    function calculateMST(graph) {
-      const n = graph.length;
-      const selected = new Array(n).fill(false);
-      selected[0] = true;
-      let edgeCount = 0;
-      let mstWeight = 0;
-
-      while (edgeCount < n - 1) {
-        let min = Infinity;
-        let x = 0, y = 0;
-        for (let i = 0; i < n; i++) {
-          if (selected[i]) {
-            for (let j = 0; j < n; j++) {
-              if (!selected[j] && graph[i][j]) {
-                if (min > graph[i][j]) {
-                  min = graph[i][j];
-                  x = i;
-                  y = j;
-                }
-              }
-            }
-          }
-        }
-        mstWeight += graph[x][y];
-        selected[y] = true;
-        edgeCount++;
-      }
-      return mstWeight;
-    }
-
-    // Calculate Upper Bound (longest possible tour)
+    // Calculate upper bound for efficiency calculation
     function calculateUpperBound(graph) {
       const n = graph.length;
       let maxTour = 0;
@@ -156,117 +357,148 @@
       return maxTour;
     }
 
-    const lowerBound = calculateMST(graph);
-    const upperBound = calculateUpperBound(graph);
-
-    // console.log('bounds: [', lowerBound, ',', upperBound, ']');
-
-    const sortedPoints = [...points];
-
-    sortedPoints.sort((a, b) => {
-      return a.angle - b.angle;
-    });
-
-    // console.log(sortedPoints);
-
-    points.forEach(({ x, y }) => {
-      const pointDiv = document.createElement('div');
-      pointDiv.classList.add('point');
-      pointDiv.style.left = `${x - 5}px`; // Center justify the point
-      pointDiv.style.top = `${y - 5}px`; // Center justify the point
-      container.appendChild(pointDiv);
-    });
-
-    const zigzag = (i) => {
-      const p1 = sortedPoints[(i - 1) % sortedPoints.length];
-      const p2 = sortedPoints[(i) % sortedPoints.length];
-      const p3 = sortedPoints[(i + 1) % sortedPoints.length];
-      const p4 = sortedPoints[(i + 2) % sortedPoints.length];
-      const segment1 = distance(p1, p2);
-      const segment3 = distance(p3, p4);
-      const zigZagSegment1 = distance(p1, p3);
-      const zigZagSegment3 = distance(p2, p4);
-      return (zigZagSegment1 + zigZagSegment3) < (segment1 + segment3);
-    };
-
-    // Calculate distance of a solution path
-    function calculateSolutionWeight(path) {
-      let totalDistance = 0;
-      for (let i = 0; i < path.length - 1; i++) {
-        totalDistance += distance(path[i], path[i + 1]);
-      }
-      totalDistance += distance(path[path.length - 1], path[0]); // Return to start
-      return totalDistance;
-    }
-
+    // Calculate efficiency using bounds
     function calculateEfficiency(solutionPathLength, minimumPossiblePathLength, maximumPossiblePathLength) {
-      const percentage = ((maximumPossiblePathLength - solutionPathLength) / (maximumPossiblePathLength - minimumPossiblePathLength)) * 100;
-      return percentage;
+      return ((maximumPossiblePathLength - solutionPathLength) / (maximumPossiblePathLength - minimumPossiblePathLength)) * 100;
     }
 
-    let i = 1;
-    let connectedPoints = [];
-    function step() {
-      // console.log(i);
-      if (sortedPoints.length - i > 2 && zigzag(i)) {
-        // console.log('i', i, 'sortedPoints.length', sortedPoints.length);
-        connectedPoints.push(sortedPoints[(i - 1) % sortedPoints.length]);
-        connectedPoints.push(sortedPoints[(i + 1) % sortedPoints.length]);
-        drawLineSegment(sortedPoints[(i - 1) % sortedPoints.length], sortedPoints[(i + 1) % sortedPoints.length], 2, 0.5, "blue");
-        connectedPoints.push(sortedPoints[(i) % sortedPoints.length]);
-        drawLineSegment(sortedPoints[(i + 1) % sortedPoints.length], sortedPoints[(i) % sortedPoints.length], 2, 0.5, "blue");
-        connectedPoints.push(sortedPoints[(i + 2) % sortedPoints.length]);
-        drawLineSegment(sortedPoints[(i) % sortedPoints.length], sortedPoints[(i + 2) % sortedPoints.length], 2, 0.5, "blue");
-        i += 3;
-        if (i < (sortedPoints.length + 1)) {
-          requestAnimationFrame(step);
-        } else {
-          const pathLength = calculateSolutionWeight(connectedPoints);
-          console.log(`points: ${NUM_POINTS}
-solution: ${pathLength}
-bounds: [${lowerBound}, ${upperBound}]
-efficiency: ${calculateEfficiency(pathLength, lowerBound, upperBound)}%`);
-        }
-      } else {
-        // console.log('i', i)
-        // console.log('sortedPoints[i - 1]', sortedPoints[i - 1]);
-        // console.log('i % sortedPoints.length', i % sortedPoints.length)
-        // console.log('sortedPoints[i % sortedPoints.length]', sortedPoints[i % sortedPoints.length]);
-        connectedPoints.push(sortedPoints[i - 1]);
-        connectedPoints.push(sortedPoints[i % sortedPoints.length]);
-        drawLineSegment(sortedPoints[i - 1], sortedPoints[i % sortedPoints.length], 2, 0.5);
-        i++;
-        if (i < (sortedPoints.length + 1)) {
-          requestAnimationFrame(step);
-        } else {
-          const pathLength = calculateSolutionWeight(connectedPoints);
-          console.log(`points: ${NUM_POINTS}
-solution: ${pathLength}
-bounds: [${lowerBound}, ${upperBound}]
-efficiency: ${calculateEfficiency(pathLength, lowerBound, upperBound)}%`);
-        }
-      }
-    }
+    // Drawing functions using percentage-based positioning
+    function drawLineSegment(container, start, end, color = "green", opacity = 1) {
+      const dx = end.percentX - start.percentX;
+      const dy = end.percentY - start.percentY;
+      const length = Math.hypot(dx, dy);
+      const deg = Math.atan2(dy, dx) * 180 / Math.PI;
 
-    function drawLineSegment(start, end, size, opacity, color) {
-      var length = Math.hypot(end.y - start.y, end.x - start.x),
-        deg = Math.atan2(end.y - start.y, end.x - start.x) * 180 / Math.PI;
-
-      var newdiv = document.createElement('div');
-      newdiv.style.width = length + "px";
-      newdiv.style.height = (size || 2) + "px";
-      newdiv.style.left = start.x + "px";
-      newdiv.style.top = start.y + "px";
-      newdiv.style.background = color || "green";
-      newdiv.style.opacity = opacity || 1;
-      newdiv.style.transformOrigin = "left 50%";
+      const newdiv = document.createElement('div');
+      newdiv.className = 'line-segment';
+      newdiv.style.width = length + "%";
+      newdiv.style.left = start.percentX + "%";
+      newdiv.style.top = start.percentY + "%";
+      newdiv.style.background = color;
+      newdiv.style.opacity = opacity;
       newdiv.style.transform = "rotate(" + deg + "deg)";
-      newdiv.style.position = "absolute";
 
       container.appendChild(newdiv);
     }
 
-    step();
+    function displayPoints(container, points) {
+      points.forEach(({ percentX, percentY }) => {
+        const pointDiv = document.createElement('div');
+        pointDiv.classList.add('point');
+        pointDiv.style.left = percentX + "%";
+        pointDiv.style.top = percentY + "%";
+        container.appendChild(pointDiv);
+      });
+    }
+
+    // Check if zigzag pattern is better for a group of 4 points
+    function shouldZigzag(p1, p2, p3, p4) {
+      const directDist = TSPUtils.distance(p1, p2) + TSPUtils.distance(p3, p4);
+      const zigzagDist = TSPUtils.distance(p1, p3) + TSPUtils.distance(p2, p4);
+      return zigzagDist < directDist;
+    }
+
+    // Main execution with animated construction
+    async function runZigzagVisualization() {
+      const container = document.getElementById('canvas');
+      const statsDiv = document.getElementById('stats');
+      const progressBar = document.getElementById('progress');
+
+      // Generate normalized points (each with pre-calculated angle)
+      const normalizedPoints = generateNormalizedPoints(NUM_POINTS);
+      const points = scalePointsToPercent(normalizedPoints);
+      const graph = createDistanceMatrix(points);
+      const lowerBound = calculateMST(graph);
+      const upperBound = calculateUpperBound(graph);
+
+      // Display points
+      displayPoints(container, points);
+
+      // Update grid info
+      document.getElementById('grid-info').textContent =
+        `${NUM_POINTS} points on a ${GRID_SIZE}x${GRID_SIZE} virtual grid`;
+
+      // Sort points by angle for zigzag algorithm
+      const sortedIndices = [...Array(points.length).keys()].sort((a, b) =>
+        normalizedPoints[a].angle - normalizedPoints[b].angle
+      );
+
+      // Animate the zigzag construction
+      let i = 0;
+      let zigzagCount = 0;
+      const tour = [];
+
+      function animateStep() {
+        if (i < sortedIndices.length) {
+          const n = sortedIndices.length;
+
+          // Check if we should apply zigzag
+          if (n - i > 2) {
+            const p1 = points[sortedIndices[(i) % n]];
+            const p2 = points[sortedIndices[(i + 1) % n]];
+            const p3 = points[sortedIndices[(i + 2) % n]];
+            const p4 = points[sortedIndices[(i + 3) % n]];
+
+            if (shouldZigzag(p1, p2, p3, p4)) {
+              // Zigzag pattern: p1 -> p3 -> p2 -> p4
+              drawLineSegment(container, p1, p3, "blue", 0.7);
+              drawLineSegment(container, p3, p2, "blue", 0.7);
+              drawLineSegment(container, p2, p4, "blue", 0.7);
+              tour.push(sortedIndices[i], sortedIndices[i + 2], sortedIndices[i + 1]);
+              i += 3;
+              zigzagCount++;
+            } else {
+              // Normal connection
+              drawLineSegment(container, p1, p2, "green", 0.7);
+              tour.push(sortedIndices[i]);
+              i++;
+            }
+          } else {
+            // Connect remaining points normally
+            const current = points[sortedIndices[i]];
+            const next = points[sortedIndices[(i + 1) % n]];
+            drawLineSegment(container, current, next, "green", 0.7);
+            tour.push(sortedIndices[i]);
+            i++;
+          }
+
+          progressBar.style.width = (i / sortedIndices.length * 100) + '%';
+          requestAnimationFrame(animateStep);
+        } else {
+          // Add remaining points to tour and close the loop
+          while (tour.length < sortedIndices.length) {
+            const missing = sortedIndices.find(idx => !tour.includes(idx));
+            if (missing !== undefined) tour.push(missing);
+            else break;
+          }
+
+          // Close the tour
+          const lastIdx = tour[tour.length - 1];
+          const firstIdx = tour[0];
+          drawLineSegment(container, points[lastIdx], points[firstIdx], "green", 0.7);
+
+          // Calculate final statistics
+          const pathLength = calculateTourLength(tour, graph);
+          const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
+
+          statsDiv.innerHTML = `
+            <div><strong>Points:</strong> ${NUM_POINTS}</div>
+            <div><strong>Solution Path Length:</strong> ${pathLength.toFixed(2)}</div>
+            <div><strong>Lower Bound (MST):</strong> ${lowerBound.toFixed(2)}</div>
+            <div><strong>Upper Bound:</strong> ${upperBound.toFixed(2)}</div>
+            <div><strong>Zigzag Applications:</strong> ${zigzagCount}</div>
+            <div class="efficiency-highlight">Efficiency: ${efficiency.toFixed(2)}%</div>
+          `;
+        }
+      }
+
+      // Start animation
+      statsDiv.innerHTML = '<div>Building path with zigzag optimization...</div>';
+      animateStep();
+    }
+
+    // Start visualization when page loads
+    runZigzagVisualization();
   </script>
 </body>
 

@@ -1,354 +1,401 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Sonar</title>
-    <style>
-        @charset "UTF-8";
-        body {
-        background: #000716;
-        }
+<html lang="en">
 
-        .app {
-        background: linear-gradient(0deg, #000716 0%, rgba(65, 245, 37, 0.1) 50%, #000716 100%);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 40px 20px;
-        position: relative;
-        overflow: hidden;
-        }
-        @media (min-width: 800px) {
-        .app {
-            padding: 100px 20px;
-        }
-        }
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sonar - Interactive Radar Visualization</title>
+  <style>
+    :root {
+      font-size: 16px;
+      --sonar-green: #41f525;
+      --sonar-green-dim: rgba(65, 245, 37, 0.6);
+      --sonar-green-faint: rgba(65, 245, 37, 0.4);
+      --sonar-green-ghost: rgba(65, 245, 37, 0.1);
+      --sonar-bg: #000716;
+    }
 
-        .sonar {
-        width: 80%;
-        padding-top: 80%;
-        height: 0;
-        position: relative;
-        }
-        @media (min-width: 800px) {
-        .sonar {
-            width: 40%;
-            padding-top: 40%;
-        }
-        }
-        .sonar__container {
-        width: calc(100% - 60px);
-        height: calc(100% - 60px);
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        position: absolute;
-        border: 1px solid rgba(65, 245, 37, 0.6);
-        border-radius: 50%;
-        }
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--sonar-bg);
+      font-family: Arial, sans-serif;
+      min-height: 100vh;
+    }
 
-        .distance {
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        z-index: 10;
-        }
+    .header {
+      text-align: center;
+      padding: 1.25rem;
+      background: linear-gradient(180deg, rgba(65, 245, 37, 0.1) 0%, var(--sonar-bg) 100%);
+    }
 
-        .distance__circle {
-        background: transparent;
-        box-shadow: inset 1px 0 0 0 rgba(65, 245, 37, 0.4), inset -1px 0 0 0 rgba(65, 245, 37, 0.4), inset 0 1px 0 0 rgba(65, 245, 37, 0.4), inset 0 -1px 0 0 rgba(65, 245, 37, 0.4);
-        border-radius: 50%;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        position: absolute;
-        }
+    .header h1 {
+      color: var(--sonar-green);
+      margin: 0 0 0.5rem 0;
+      font-size: 1.75rem;
+      text-shadow: 0 0 0.625rem var(--sonar-green-dim);
+    }
 
-        .distance__circle:nth-child(1) {
-        width: 20%;
-        height: 20%;
-        }
+    .header p {
+      color: var(--sonar-green-dim);
+      margin: 0.25rem 0;
+      font-size: 0.875rem;
+    }
 
-        .distance__circle:nth-child(2) {
+    .header-info {
+      font-size: 0.75rem;
+      color: var(--sonar-green-faint);
+      margin-top: 0.625rem;
+    }
+
+    .header-info a {
+      color: var(--sonar-green);
+      text-decoration: none;
+    }
+
+    .header-info a:hover {
+      text-decoration: underline;
+    }
+
+    .app {
+      background: linear-gradient(0deg, var(--sonar-bg) 0%, var(--sonar-green-ghost) 50%, var(--sonar-bg) 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2.5rem 1.25rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sonar {
+      width: 80%;
+      max-width: 37.5rem;
+      padding-top: 80%;
+      max-height: 80vmin;
+      height: 0;
+      position: relative;
+    }
+
+    @media (min-width: 50rem) {
+      .sonar {
         width: 40%;
-        height: 40%;
-        }
+        padding-top: 40%;
+      }
+    }
 
-        .distance__circle:nth-child(3) {
-        width: 60%;
-        height: 60%;
-        }
+    .sonar__container {
+      width: calc(100% - 3.75rem);
+      height: calc(100% - 3.75rem);
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      position: absolute;
+      border: 0.0625rem solid var(--sonar-green-dim);
+      border-radius: 50%;
+    }
 
-        .distance__circle:nth-child(4) {
-        width: 80%;
-        height: 80%;
-        }
+    .distance {
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+    }
 
-        .distance__circle:nth-child(5) {
-        width: 100%;
-        height: 100%;
-        }
+    .distance__circle {
+      background: transparent;
+      box-shadow: inset 0.0625rem 0 0 0 var(--sonar-green-faint),
+        inset -0.0625rem 0 0 0 var(--sonar-green-faint),
+        inset 0 0.0625rem 0 0 var(--sonar-green-faint),
+        inset 0 -0.0625rem 0 0 var(--sonar-green-faint);
+      border-radius: 50%;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      position: absolute;
+    }
 
-        .degree {
-        width: 100%;
-        height: 100%;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        position: absolute;
-        z-index: 10;
-        }
+    .distance__circle:nth-child(1) { width: 20%; height: 20%; }
+    .distance__circle:nth-child(2) { width: 40%; height: 40%; }
+    .distance__circle:nth-child(3) { width: 60%; height: 60%; }
+    .distance__circle:nth-child(4) { width: 80%; height: 80%; }
+    .distance__circle:nth-child(5) { width: 100%; height: 100%; }
 
-        .degree__line {
-        height: 50%;
-        width: 1px;
-        background: rgba(65, 245, 37, 0.4);
-        left: 50%;
-        bottom: 50%;
-        position: absolute;
-        transform-origin: bottom center;
-        transform: translate(-50%, 0) rotateZ(0);
-        }
-        .degree__line:before {
-        content: "360°";
-        position: absolute;
-        color: rgba(65, 245, 37, 0.4);
-        font-family: cursive;
-        font-size: 1rem;
-        top: -34px;
-        left: 50%;
-        transform: translate(-50%, -50%) rotateZ(0deg);
-        }
-        .degree__line:after {
-        position: absolute;
-        color: rgba(65, 245, 37, 0.6);
-        font-family: cursive;
-        font-size: 1rem;
-        bottom: -44px;
-        left: 50%;
-        transform: translate(-50%, -50%) rotateZ(180deg);
-        }
+    .degree {
+      width: 100%;
+      height: 100%;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      position: absolute;
+      z-index: 10;
+    }
 
-        .degree__line:nth-child(1) {
-        transform: translate(-50%, 0) rotateZ(0deg);
-        }
-        .degree__line:nth-child(1):before {
-        content: "0" "°";
-        transform: translate(-50%, 0) rotateZ(-0deg);
-        }
+    .degree__line {
+      height: 50%;
+      width: 0.0625rem;
+      background: var(--sonar-green-faint);
+      left: 50%;
+      bottom: 50%;
+      position: absolute;
+      transform-origin: bottom center;
+    }
 
-        .degree__line:nth-child(2) {
-        transform: translate(-50%, 0) rotateZ(30deg);
-        }
-        .degree__line:nth-child(2):before {
-        content: "30" "°";
-        transform: translate(-50%, 0) rotateZ(-30deg);
-        }
+    .degree__line::before {
+      content: attr(data-angle);
+      position: absolute;
+      color: var(--sonar-green-faint);
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      top: -1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+    }
 
-        .degree__line:nth-child(3) {
-        transform: translate(-50%, 0) rotateZ(60deg);
-        }
-        .degree__line:nth-child(3):before {
-        content: "60" "°";
-        transform: translate(-50%, 0) rotateZ(-60deg);
-        }
+    .degree__line:nth-child(1)  { transform: translateX(-50%) rotate(0deg); }
+    .degree__line:nth-child(2)  { transform: translateX(-50%) rotate(30deg); }
+    .degree__line:nth-child(3)  { transform: translateX(-50%) rotate(60deg); }
+    .degree__line:nth-child(4)  { transform: translateX(-50%) rotate(90deg); }
+    .degree__line:nth-child(5)  { transform: translateX(-50%) rotate(120deg); }
+    .degree__line:nth-child(6)  { transform: translateX(-50%) rotate(150deg); }
+    .degree__line:nth-child(7)  { transform: translateX(-50%) rotate(180deg); }
+    .degree__line:nth-child(8)  { transform: translateX(-50%) rotate(210deg); }
+    .degree__line:nth-child(9)  { transform: translateX(-50%) rotate(240deg); }
+    .degree__line:nth-child(10) { transform: translateX(-50%) rotate(270deg); }
+    .degree__line:nth-child(11) { transform: translateX(-50%) rotate(300deg); }
+    .degree__line:nth-child(12) { transform: translateX(-50%) rotate(330deg); }
 
-        .degree__line:nth-child(4) {
-        transform: translate(-50%, 0) rotateZ(90deg);
-        }
-        .degree__line:nth-child(4):before {
-        content: "90" "°";
-        transform: translate(-50%, 0) rotateZ(-90deg);
-        }
+    .degree__line:nth-child(1)::before  { content: "0°"; transform: translateX(-50%) rotate(0deg); }
+    .degree__line:nth-child(2)::before  { content: "30°"; transform: translateX(-50%) rotate(-30deg); }
+    .degree__line:nth-child(3)::before  { content: "60°"; transform: translateX(-50%) rotate(-60deg); }
+    .degree__line:nth-child(4)::before  { content: "90°"; transform: translateX(-50%) rotate(-90deg); }
+    .degree__line:nth-child(5)::before  { content: "120°"; transform: translateX(-50%) rotate(-120deg); }
+    .degree__line:nth-child(6)::before  { content: "150°"; transform: translateX(-50%) rotate(-150deg); }
+    .degree__line:nth-child(7)::before  { content: "180°"; transform: translateX(-50%) rotate(-180deg); }
+    .degree__line:nth-child(8)::before  { content: "210°"; transform: translateX(-50%) rotate(-210deg); }
+    .degree__line:nth-child(9)::before  { content: "240°"; transform: translateX(-50%) rotate(-240deg); }
+    .degree__line:nth-child(10)::before { content: "270°"; transform: translateX(-50%) rotate(-270deg); }
+    .degree__line:nth-child(11)::before { content: "300°"; transform: translateX(-50%) rotate(-300deg); }
+    .degree__line:nth-child(12)::before { content: "330°"; transform: translateX(-50%) rotate(-330deg); }
 
-        .degree__line:nth-child(5) {
-        transform: translate(-50%, 0) rotateZ(120deg);
-        }
-        .degree__line:nth-child(5):before {
-        content: "120" "°";
-        transform: translate(-50%, 0) rotateZ(-120deg);
-        }
+    .rotary {
+      width: 100%;
+      height: 100%;
+      background: conic-gradient(var(--sonar-bg) 20%, rgba(0, 7, 22, 0) 86%, var(--sonar-green));
+      overflow: hidden;
+      border-radius: 50%;
+      animation: rotating 5.4s linear infinite;
+      transform-origin: center center;
+      z-index: -1;
+      position: relative;
+    }
 
-        .degree__line:nth-child(6) {
-        transform: translate(-50%, 0) rotateZ(150deg);
-        }
-        .degree__line:nth-child(6):before {
-        content: "150" "°";
-        transform: translate(-50%, 0) rotateZ(-150deg);
-        }
+    @keyframes rotating {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
 
-        .degree__line:nth-child(7) {
-        transform: translate(-50%, 0) rotateZ(180deg);
-        }
-        .degree__line:nth-child(7):before {
-        content: "180" "°";
-        transform: translate(-50%, 0) rotateZ(-180deg);
-        }
+    .matrix {
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-image: linear-gradient(0deg,
+        var(--sonar-green-ghost) 25%,
+        var(--sonar-bg) 25%,
+        var(--sonar-bg) 50%,
+        var(--sonar-green-ghost) 50%,
+        var(--sonar-green-ghost) 75%,
+        var(--sonar-bg) 75%,
+        var(--sonar-bg) 100%);
+      background-size: 0.25rem 0.25rem;
+      border-radius: 50%;
+    }
 
-        .degree__line:nth-child(8) {
-        transform: translate(-50%, 0) rotateZ(210deg);
-        }
-        .degree__line:nth-child(8):before {
-        content: "210" "°";
-        transform: translate(-50%, 0) rotateZ(-210deg);
-        }
+    .display {
+      width: 100%;
+      height: 100%;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      position: absolute;
+      z-index: -2;
+    }
 
-        .degree__line:nth-child(9) {
-        transform: translate(-50%, 0) rotateZ(240deg);
-        }
-        .degree__line:nth-child(9):before {
-        content: "240" "°";
-        transform: translate(-50%, 0) rotateZ(-240deg);
-        }
+    .ship {
+      width: 2.5%;
+      height: 2.5%;
+      background: var(--sonar-green);
+      position: absolute;
+      border-radius: 50%;
+      box-shadow: 0 0 0.375rem 0.125rem var(--sonar-green);
+    }
 
-        .degree__line:nth-child(10) {
-        transform: translate(-50%, 0) rotateZ(270deg);
-        }
-        .degree__line:nth-child(10):before {
-        content: "270" "°";
-        transform: translate(-50%, 0) rotateZ(-270deg);
-        }
+    .info-panel {
+      background: rgba(0, 7, 22, 0.9);
+      border: 0.0625rem solid var(--sonar-green-dim);
+      border-radius: 0.625rem;
+      padding: 1.25rem;
+      margin: 1.25rem auto;
+      max-width: 37.5rem;
+      width: calc(100% - 2.5rem);
+    }
 
-        .degree__line:nth-child(11) {
-        transform: translate(-50%, 0) rotateZ(300deg);
-        }
-        .degree__line:nth-child(11):before {
-        content: "300" "°";
-        transform: translate(-50%, 0) rotateZ(-300deg);
-        }
+    .info-panel h2 {
+      color: var(--sonar-green);
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 1.125rem;
+    }
 
-        .degree__line:nth-child(12) {
-        transform: translate(-50%, 0) rotateZ(330deg);
-        }
-        .degree__line:nth-child(12):before {
-        content: "330" "°";
-        transform: translate(-50%, 0) rotateZ(-330deg);
-        }
+    .info-panel p {
+      color: var(--sonar-green-dim);
+      font-size: 0.875rem;
+      line-height: 1.6;
+      margin: 0.5rem 0;
+    }
 
-        .rotary {
-        width: 100%;
-        height: 100%;
-        background: conic-gradient(#000716 20%, rgba(0, 7, 22, 0) 86%, #41f525);
-        overflow: hidden;
-        border-radius: 50%;
-        -webkit-animation: rotating 5.4s linear infinite;
-                animation: rotating 5.4s linear infinite;
-        transform-origin: center center;
-        z-index: -1;
-        position: relative;
-        }
+    .info-panel ul {
+      color: var(--sonar-green-dim);
+      font-size: 0.875rem;
+      line-height: 1.8;
+      padding-left: 1.25rem;
+    }
 
-        @-webkit-keyframes rotating {
-        from {
-            transform: rotate(0deg);
-        }
-        to {
-            transform: rotate(360deg);
-        }
-        }
+    .stats {
+      color: var(--sonar-green);
+      font-size: 0.875rem;
+      text-align: center;
+      padding: 0.625rem;
+    }
 
-        @keyframes rotating {
-        from {
-            transform: rotate(0deg);
-        }
-        to {
-            transform: rotate(360deg);
-        }
-        }
-        .matrix {
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        background-image: linear-gradient(0deg, rgba(65, 245, 37, 0.1) 25%, #000716 25%, #000716 50%, rgba(65, 245, 37, 0.1) 50%, rgba(65, 245, 37, 0.1) 75%, #000716 75%, #000716 100%);
-        background-size: 4px 4px;
-        border-radius: 50%;
-        }
+    @media (max-width: 48rem) {
+      .header h1 {
+        font-size: 1.5rem;
+      }
 
-        .display {
-        width: 100%;
-        height: 100%;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        position: absolute;
-        z-index: -2;
-        }
+      .app {
+        padding: 1.5rem 0.75rem;
+      }
 
-        .ship {
-            width: 2.5%;
-            height: 2.5%;
-            background: #41f525;
-            position: absolute;
-            border-radius: 50%;
-            box-shadow: 0px 0px 6px 2px #41f525;
-        }
+      .info-panel {
+        padding: 1rem;
+        margin: 1rem;
+      }
+    }
 
-        .ship-1 {
-            top: 21%;
-            left: 45%;
-        }
+    @media (max-width: 30rem) {
+      :root {
+        font-size: 14px;
+      }
 
-        .ship-2 {
-            top: 14%;
-            left: 78%;
-        }
-    </style>
-  </head>
-  <body>
-    <div class="app">
-        <div class="sonar">
-            <div class="sonar__container">
-                <div class="distance">
-                    <div class="distance__circle"></div>
-                    <div class="distance__circle"></div>
-                    <div class="distance__circle"></div>
-                    <div class="distance__circle"></div>
-                    <div class="distance__circle"></div>
-                </div>
-                <div class="degree">
-                    <div class="degree__line"></div>
-                    <div class="degree__line"></div>
-                    <div class="degree__line"></div>
-                    <div class="degree__line"></div>
-                    <div class="degree__line"></div>
-                    <div class="degree__line"></div>
-                    <div class="degree__line"></div>
-                    <div class="degree__line"></div>
-                    <div class="degree__line"></div>
-                    <div class="degree__line"></div>
-                    <div class="degree__line"></div>
-                    <div class="degree__line"></div>
-                </div>
-                <div class="matrix"></div>
-                <div class="rotary"></div>
-                <div id="sea" class="display">
-                    <!-- <div class="ship ship-1"></div>
-                    <div class="ship ship-2"></div> -->
-                </div>
-            </div>
+      .sonar {
+        width: 90%;
+        padding-top: 90%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h1>Sonar Visualization</h1>
+    <p>Interactive Radar Display</p>
+    <p id="stats" class="stats"></p>
+    <p class="header-info">
+      <a href="https://github.com/konard/sonar" target="_blank" rel="noopener noreferrer">View source code on GitHub</a>
+    </p>
+  </div>
+
+  <div class="app">
+    <div class="sonar">
+      <div class="sonar__container">
+        <div class="distance">
+          <div class="distance__circle"></div>
+          <div class="distance__circle"></div>
+          <div class="distance__circle"></div>
+          <div class="distance__circle"></div>
+          <div class="distance__circle"></div>
         </div>
+        <div class="degree">
+          <div class="degree__line"></div>
+          <div class="degree__line"></div>
+          <div class="degree__line"></div>
+          <div class="degree__line"></div>
+          <div class="degree__line"></div>
+          <div class="degree__line"></div>
+          <div class="degree__line"></div>
+          <div class="degree__line"></div>
+          <div class="degree__line"></div>
+          <div class="degree__line"></div>
+          <div class="degree__line"></div>
+          <div class="degree__line"></div>
+        </div>
+        <div class="matrix"></div>
+        <div class="rotary"></div>
+        <div id="sea" class="display"></div>
+      </div>
     </div>
-    <script>
-        function randomIntFromInterval(min, max) { 
-            return Math.floor(Math.random() * (max - min + 1) + min);
-        }
+  </div>
 
-        const N = randomIntFromInterval(3, 100);
+  <div class="info-panel">
+    <h2>About Sonar</h2>
+    <p>
+      This visualization demonstrates a sonar radar sweep, which is the inspiration for the
+      <strong>Sonar Visit algorithm</strong> - a constant-time approach to the Traveling Salesman Problem.
+    </p>
+    <p><strong>Key concepts:</strong></p>
+    <ul>
+      <li>The rotating beam performs a 360-degree sweep</li>
+      <li>Objects (ships) are detected at their angular position</li>
+      <li>Each point has coordinates (x, y) and a pre-calculated angle from center</li>
+      <li>The sweep visits points in angular order, connecting them to form a tour</li>
+    </ul>
+    <p>
+      <a href="optimization-comparison.html" style="color: var(--sonar-green);">View the full algorithm comparison</a>
+      to see how Sonar Visit compares to other TSP algorithms.
+    </p>
+  </div>
 
-        for (let i = 0; i < N; i++) {
-            const top = randomIntFromInterval(15, 85);
-            const left = randomIntFromInterval(15, 85);
-            const div = document.createElement("div");
-            div.style.top = `${top}%`;
-            div.style.left = `${left}%`;
-            div.className = 'ship';
-            document.getElementById("sea").appendChild(div);
-        }
-    </script>
-  </body>
+  <script>
+    function randomIntFromInterval(min, max) {
+      return Math.floor(Math.random() * (max - min + 1) + min);
+    }
+
+    // Number of ships to display
+    const N = randomIntFromInterval(10, 50);
+    const sea = document.getElementById('sea');
+
+    // Generate ships with pre-calculated positions and angles
+    for (let i = 0; i < N; i++) {
+      // Position within the circular area (15-85% to stay within bounds)
+      const top = randomIntFromInterval(15, 85);
+      const left = randomIntFromInterval(15, 85);
+
+      // Pre-calculate angle from center (50%, 50%)
+      const dx = left - 50;
+      const dy = top - 50;
+      let angle = Math.atan2(dy, dx);
+      if (angle < 0) angle += 2 * Math.PI;
+
+      // Create ship element
+      const div = document.createElement('div');
+      div.style.top = `${top}%`;
+      div.style.left = `${left}%`;
+      div.className = 'ship';
+      div.dataset.angle = angle.toFixed(2);
+      div.dataset.x = left;
+      div.dataset.y = top;
+      sea.appendChild(div);
+    }
+
+    // Update stats
+    document.getElementById('stats').textContent = `Tracking ${N} objects`;
+  </script>
+</body>
+
 </html>
