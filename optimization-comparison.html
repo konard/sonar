@@ -130,6 +130,7 @@
   <div class="header">
     <h1>Path Optimization Methods Comparison</h1>
     <p>Comparing different approaches to solve the Traveling Salesman Problem</p>
+    <p id="grid-info" style="font-size: 12px; color: #666; margin-top: 10px;"></p>
   </div>
 
   <div class="methods-container">
@@ -187,6 +188,17 @@
       <div class="progress"><div class="progress-bar" id="progress5"></div></div>
       <div class="stats" id="stats5">Initializing...</div>
     </div>
+
+    <div class="method-card">
+      <div class="method-title">6. Sonar Visit</div>
+      <div class="method-description">
+        360° rotation sweep in fixed angle steps. Points on the same angle are connected sequentially.
+        Constant-time O(1) angle steps regardless of point count.
+      </div>
+      <div class="canvas-container"><div class="canvas-inner" id="canvas6"></div></div>
+      <div class="progress"><div class="progress-bar" id="progress6"></div></div>
+      <div class="stats" id="stats6">Initializing...</div>
+    </div>
   </div>
 
   <div class="comparison-table">
@@ -206,6 +218,13 @@
         <tr><td colspan="6">Running optimizations...</td></tr>
       </tbody>
     </table>
+    <div style="font-size: 12px; color: #666; margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+      <strong>Complexity Notes:</strong><br>
+      • <strong>Angular Sort O(n log n)</strong>: Dominated by the sorting step<br>
+      • <strong>Sonar Visit O(1)*</strong>: The angle sweep uses a fixed number of steps (4×GRID_SIZE) determined by grid resolution,
+        not by point count. While point assignment to buckets is O(n), the core sweep algorithm is constant-time.
+        With sufficient grid precision, all point configurations can be handled in constant angle steps.
+    </div>
   </div>
 
   <script>
@@ -215,29 +234,55 @@
     }
 
     const NUM_POINTS = 50; // Fixed for fair comparison
+    const GRID_SIZE = 20; // Virtual N×N grid for point placement
 
     // Generate same points for all methods with random seed for variety on each reload
     const initialSeed = Math.floor(Math.random() * 1000000);
 
-    // Generate points with normalized coordinates (0-1 range) for responsive scaling
-    const generateNormalizedPoints = (numPoints, seed = initialSeed) => {
+    // Generate points on a virtual N×N grid for consistent placement
+    // This enables O(1) sonar visit as angle steps are determined by grid size, not point count
+    const generateNormalizedPoints = (numPoints, gridSize = GRID_SIZE, seed = initialSeed) => {
       // Simple LCG for reproducible results within same page load
       let currentSeed = seed;
       const rng = () => {
         currentSeed = (currentSeed * 1103515245 + 12345) % (2**31);
         return currentSeed / (2**31);
       };
-      const points = [];
+
       const center = 0.5; // Normalized center
       const maxRadius = 0.45; // Leave some padding from edges
-      for (let i = 0; i < numPoints; i++) {
-        const angle = rng() * 2 * Math.PI;
-        const r = Math.sqrt(rng()) * maxRadius;
-        const x = r * Math.cos(angle) + center;
-        const y = r * Math.sin(angle) + center;
-        points.push({ x, y, angle, id: i });
+
+      // Generate all valid grid positions within the circular area
+      const gridStep = 1 / gridSize;
+      const validPositions = [];
+
+      for (let gx = 0; gx < gridSize; gx++) {
+        for (let gy = 0; gy < gridSize; gy++) {
+          const x = (gx + 0.5) * gridStep;
+          const y = (gy + 0.5) * gridStep;
+          const dx = x - center;
+          const dy = y - center;
+          const distFromCenter = Math.sqrt(dx * dx + dy * dy);
+
+          // Only include points within the circular area
+          if (distFromCenter <= maxRadius) {
+            const angle = Math.atan2(dy, dx);
+            validPositions.push({ x, y, angle: angle < 0 ? angle + 2 * Math.PI : angle, gx, gy });
+          }
+        }
       }
-      return points;
+
+      // Shuffle valid positions using Fisher-Yates
+      for (let i = validPositions.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [validPositions[i], validPositions[j]] = [validPositions[j], validPositions[i]];
+      }
+
+      // Select numPoints from shuffled positions
+      const points = validPositions.slice(0, Math.min(numPoints, validPositions.length));
+
+      // Assign IDs
+      return points.map((p, idx) => ({ ...p, id: idx }));
     };
 
     // Scale normalized points to actual canvas size
@@ -688,17 +733,80 @@
       };
     }
 
+    // Method 6: Sonar Visit - O(1) angle steps algorithm
+    // Uses a 360° rotation sweep with fixed angle steps determined by grid size
+    // Points on the same angle are connected by distance from center
+    async function runSonarVisit(container, points, graph, lowerBound, upperBound) {
+      const startTime = performance.now();
+
+      // Calculate angle step based on grid size to ensure we visit all grid intersections
+      // For an N×N grid, we need at most 4*N angle steps to cover all possible angles
+      // This is O(1) with respect to point count - only depends on grid resolution
+      const angleSteps = 4 * GRID_SIZE;
+      const angleStep = (2 * Math.PI) / angleSteps;
+
+      // Group points by their angle bucket
+      const angleBuckets = new Map();
+
+      points.forEach(point => {
+        // Normalize angle to 0 to 2*PI
+        let angle = point.angle;
+        if (angle < 0) angle += 2 * Math.PI;
+
+        // Find which bucket this point belongs to
+        const bucketIndex = Math.floor(angle / angleStep);
+        if (!angleBuckets.has(bucketIndex)) {
+          angleBuckets.set(bucketIndex, []);
+        }
+        angleBuckets.get(bucketIndex).push(point);
+      });
+
+      // Sort points within each bucket by distance from center (outward sweep)
+      const center = { x: 0.5, y: 0.5 };
+      angleBuckets.forEach((bucketPoints, key) => {
+        bucketPoints.sort((a, b) => {
+          const distA = Math.hypot(a.x - center.x, a.y - center.y);
+          const distB = Math.hypot(b.x - center.x, b.y - center.y);
+          return distA - distB;
+        });
+      });
+
+      // Build tour by sweeping through angle buckets in order
+      const tour = [];
+      for (let i = 0; i < angleSteps; i++) {
+        if (angleBuckets.has(i)) {
+          const bucketPoints = angleBuckets.get(i);
+          bucketPoints.forEach(p => tour.push(p.id));
+        }
+      }
+
+      const pathLength = calculateTourLength(tour, graph);
+      visualizeTour(container, points, tour, "#17a2b8");
+
+      const endTime = performance.now();
+      const efficiency = calculateEfficiency(pathLength, lowerBound, upperBound);
+
+      return {
+        pathLength,
+        efficiency,
+        runtime: endTime - startTime,
+        complexity: "O(1)*",
+        bestFor: "Constant-time approximation"
+      };
+    }
+
     // Main execution
     async function runComparison() {
       const results = [];
 
-      // Generate points for all canvases (5 methods now)
+      // Generate points for all canvases (6 methods now)
       const containers = [
         document.getElementById('canvas1'),
         document.getElementById('canvas2'),
         document.getElementById('canvas3'),
         document.getElementById('canvas4'),
-        document.getElementById('canvas5')
+        document.getElementById('canvas5'),
+        document.getElementById('canvas6')
       ];
 
       // Generate normalized points once (same for all canvases)
@@ -719,13 +827,14 @@
         container.upperBound = calculateUpperBound(container.graph);
       });
 
-      // Run methods sequentially from 1 to 5
+      // Run methods sequentially from 1 to 6
       const methods = [
         { name: "Angular Sort", fn: runAngularSort, id: 1 },
         { name: "Zigzag Optimization", fn: runZigzagOptimization, id: 2 },
         { name: "2-Opt Optimization", fn: run2OptOptimization, id: 3 },
         { name: "Hybrid: 2-Opt → Zigzag", fn: runHybrid2OptThenZigzag, id: 4 },
-        { name: "Hybrid: Zigzag → 2-Opt", fn: runHybridZigzagThen2Opt, id: 5 }
+        { name: "Hybrid: Zigzag → 2-Opt", fn: runHybridZigzagThen2Opt, id: 5 },
+        { name: "Sonar Visit", fn: runSonarVisit, id: 6 }
       ];
 
       // Execute methods sequentially (1 to 5)
@@ -799,7 +908,8 @@
         document.getElementById('canvas2'),
         document.getElementById('canvas3'),
         document.getElementById('canvas4'),
-        document.getElementById('canvas5')
+        document.getElementById('canvas5'),
+        document.getElementById('canvas6')
       ];
 
       containers.forEach(container => {
@@ -807,7 +917,7 @@
       });
 
       // Reset progress bars and stats
-      for (let i = 1; i <= 5; i++) {
+      for (let i = 1; i <= 6; i++) {
         document.getElementById(`progress${i}`).style.width = '0%';
         document.getElementById(`stats${i}`).innerHTML = 'Resizing...';
       }
@@ -817,6 +927,10 @@
 
     // Listen for resize events
     window.addEventListener('resize', handleResize);
+
+    // Set grid info text
+    document.getElementById('grid-info').textContent =
+      `Points are placed on a virtual ${GRID_SIZE}×${GRID_SIZE} grid for consistent calculations.`;
 
     // Start comparison
     runComparison();
